@@ -9,28 +9,31 @@ namespace esphome
 
         void HeatPumpController::setup()
         {
-            ctrlSettings defaultSettings = {
-                29,        // uint8_t targetTemp;
-                40,        // uint8_t defrostAutoEnableTime;
-                7,         // uint8_t defrostEnableTemp;
-                13,        // uint8_t defrostDisableTemp;
-                8,         // uint8_t defrostMaxDuration;
-                2,         // uint8_t restartOffsetTemp;
-                0,         // uint8_t compressorStopMarginTemp;
-                118,       // uint8_t thermalProtection;
-                40,        // uint8_t maximumTemp;
-                15,        // uint8_t stopWhenReachedDelay;
-                true,      // bool specialCtrlMode;
-                false,     // bool on;
-                HEAT,      // actionEnum action;
-                true,      // bool autoRestart;
-                HEAT_ONLY, // modeEnum opMode;
+            this->high_freq_.start();
+            settings::ctrlSettings defaultSettings = {
+                29,                  // uint8_t targetTemp;
+                40,                  // uint8_t defrostAutoEnableTime;
+                7,                   // uint8_t defrostEnableTemp;
+                13,                  // uint8_t defrostDisableTemp;
+                8,                   // uint8_t defrostMaxDuration;
+                2,                   // uint8_t restartOffsetTemp;
+                0,                   // uint8_t compressorStopMarginTemp;
+                118,                 // uint8_t thermalProtection;
+                40,                  // uint8_t maximumTemp;
+                15,                  // uint8_t stopWhenReachedDelay;
+                true,                // bool specialCtrlMode;
+                false,               // bool on;
+                settings::HEAT,      // actionEnum action;
+                true,                // bool autoRestart;
+                settings::HEAT_ONLY, // modeEnum opMode;
             };
             this->hpSettings = defaultSettings;
             this->sendControl(this->hpSettings);
+            swi::setWireDirection(swi::RECEIVING);
+            esphome::ESP_LOGD(__FILE__, "Succesful setup !");
         }
 
-        void HeatPumpController::sendControl(ctrlSettings settings)
+        void HeatPumpController::sendControl(settings::ctrlSettings settings)
         {
             uint8_t frame[HP_FRAME_LEN];
             frame[0] = 0xCC; // header
@@ -44,7 +47,7 @@ namespace esphome
             frame[7] = 0x00; // Clear any current flag
             frame[7] |= (settings.specialCtrlMode ? 0x80 : 0x00);
             frame[7] |= (settings.on ? 0x40 : 0x00);
-            frame[7] |= ((settings.action == HEAT) ? 0x20 : 0x00);
+            frame[7] |= ((settings.action == settings::HEAT) ? 0x20 : 0x00);
             frame[7] |= (settings.autoRestart ? 0x08 : 0x00);
             frame[7] |= ((int)settings.opMode & 0x03) << 1;
             frame[8] = 0x1D; // MODE 2 (NOT A HYBRID PUMP)
@@ -54,7 +57,7 @@ namespace esphome
             frame[12] = settings.maximumTemp;
             frame[13] = settings.stopWhenReachedDelay;
             frame[14] = 0x00; // SCHEDULE SETTING OFF
-            frame[15] = computeChecksum(frame, HP_FRAME_LEN);
+            frame[15] = this->computeChecksum(frame, HP_FRAME_LEN);
         }
 
         bool HeatPumpController::decode(uint8_t frame[])
@@ -68,10 +71,9 @@ namespace esphome
                 this->hpData.defrostMaxDuration = frame[6] / 20;
                 this->hpData.on = frame[7] & 0x40;
                 this->hpData.autoRestart = frame[7] & 0x08;
-                this->hpData.opMode = static_cast<modeEnum>(frame[7] & 0x6);
-                this->hpData.action = static_cast<actionEnum>(frame[7] & 0x20);
+                this->hpData.opMode = static_cast<settings::modeEnum>(frame[7] & 0x6);
+                this->hpData.action = static_cast<settings::actionEnum>(frame[7] & 0x20);
                 this->hpData.specialCtrlMode = frame[7] & 0x80;
-                this->hpData.targetTemp = frame[7];
                 this->hpData.restartOffsetTemp = frame[9];
                 this->hpData.compressorStopMarginTemp = frame[10];
                 this->hpData.thermalProtection = frame[11];
@@ -87,7 +89,7 @@ namespace esphome
                 this->hpData.coilTemp = frame[3];
                 this->hpData.airOutletTemp = frame[4];
                 this->hpData.outdoorAirTemp = frame[5];
-                this->hpData.errorCode = static_cast<hpErrorEnum>(frame[7]);
+                this->hpData.errorCode = static_cast<settings::hpErrorEnum>(frame[7]);
                 this->hpData.timeSinceFan = frame[10];
                 this->hpData.timeSincePump = frame[11];
                 this->hpData.maximumTemp = frame[12];
@@ -100,11 +102,16 @@ namespace esphome
 
         void HeatPumpController::loop()
         {
+
             if (swi::readFrame())
             {
-                if (frameIsValid(swi::read_frame, swi::frameCnt))
+
+                if (this->frameIsValid(swi::read_frame, swi::frameCnt))
                 {
-                    decode(swi::read_frame);
+                    esphome::ESP_LOGD(__FILE__, "Got a frame");
+                    this->decode(swi::read_frame);
+                    esphome::ESP_LOGD(__FILE__, "PAC %s, temp target: %d", (this->hpData.on ? "ON" : "OFF"), this->hpData.targetTemp);
+                    esphome::ESP_LOGD(__FILE__, "Water temp IN %d, Water temp OUT: %d", this->hpData.waterTempIn, this->hpData.waterTempOut);
                 }
                 else
                 {
@@ -113,24 +120,34 @@ namespace esphome
             }
         }
 
+        void HeatPumpController::setOn(bool value)
+        {
+            this->hpSettings.on = value;
+            this->sendControl(this->hpSettings);
+        }
         void HeatPumpController::setTargetTemp(uint16_t value)
         {
             this->hpSettings.targetTemp = value;
+            this->sendControl(this->hpSettings);
         }
-
-        uint16_t HeatPumpController::getWaterInTemp()
+        float HeatPumpController::getTargetTemp()
         {
-            return this->hpData.waterTempIn;
+            return (float)this->hpData.targetTemp;
+        }
+        float HeatPumpController::getWaterInTemp()
+        {
+
+            return (float)this->hpData.waterTempIn;
         }
 
-        uint16_t HeatPumpController::getWaterOutTemp()
+        float HeatPumpController::getWaterOutTemp()
         {
             return this->hpData.waterTempOut;
         }
 
-        uint16_t HeatPumpController::getOutdoorTemp()
+        float HeatPumpController::getOutdoorTemp()
         {
-            return this->hpData.outdoorAirTemp;
+            return (float)this->hpData.outdoorAirTemp;
         }
 
         bool HeatPumpController::getOn()
@@ -147,7 +164,7 @@ namespace esphome
         {
             if (size == HP_FRAME_LEN)
             {
-                return checksumIsValid(frame, size);
+                return this->checksumIsValid(frame, size);
             }
             else
             {
@@ -158,12 +175,12 @@ namespace esphome
 
         bool HeatPumpController::checksumIsValid(uint8_t frame[], uint8_t size)
         {
-            unsigned char computed_checksum = computeChecksum(frame, size);
+            unsigned char computed_checksum = this->computeChecksum(frame, size);
             unsigned char checksum = frame[size - 1];
             return computed_checksum == checksum;
         }
 
-        uint8_t computeChecksum(uint8_t frame[], uint8_t size)
+        uint8_t HeatPumpController::computeChecksum(uint8_t frame[], uint8_t size)
         {
             unsigned int total = 0;
             for (byte i = 1; i < size - 1; i++)

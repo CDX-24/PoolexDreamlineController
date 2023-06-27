@@ -71,8 +71,8 @@ namespace swi
     /* ================================================== */
 
     boolean startFrame(void);
-    uint8_t readBit(void);
-    boolean silence(void);
+    inline uint8_t readBit(void);
+    inline boolean silence(void);
     boolean longSilence();
     boolean readFrame();
 

@@ -19,21 +19,22 @@ namespace esphome
       void loop() override;
       void setTargetTemp(uint16_t value);
       void setOn(bool value);
-      uint16_t getTargetTemp();
-      uint16_t getWaterInTemp();
-      uint16_t getWaterOutTemp();
-      uint16_t getOutdoorTemp();
+      float getTargetTemp();
+      float getWaterInTemp();
+      float getWaterOutTemp();
+      float getOutdoorTemp();
       bool getOn();
       uint16_t getErrorCode();
 
     protected:
-      hpInfo hpData;
-      ctrlSettings hpSettings;
+      settings::hpInfo hpData;
+      settings::ctrlSettings hpSettings;
+      HighFrequencyLoopRequester high_freq_;
 
       bool checksumIsValid(uint8_t frame[], uint8_t size);
       uint8_t computeChecksum(uint8_t frame[], uint8_t size);
       bool frameIsValid(uint8_t frame[], uint8_t size);
-      void sendControl(ctrlSettings settings);
+      void sendControl(settings::ctrlSettings settings);
 
       bool decode(uint8_t frame[]);
     };

@@ -47,7 +47,7 @@ namespace swi
      * @brief
      *
      */
-    void isrCallback(void)
+    IRAM_ATTR void isrCallback(void)
     {
         lastTriggerTime = triggerTime;
         triggerTime = micros();
@@ -63,7 +63,7 @@ namespace swi
      */
     void setWireDirection(wireDirection direction)
     {
-        if (direction == SENDING)
+        if (direction == RECEIVING)
         {
             pinMode(PIN, INPUT_PULLUP);
             attachInterrupt(digitalPinToInterrupt(PIN), isrCallback, CHANGE);
@@ -147,6 +147,7 @@ namespace swi
         // to avoid software watchdog reset due to the long 2000ms delay, we cut the 2000ms in 4x500ms and feed the wdt each time.
         for (uint8_t i = 0; i < 4; i++)
         {
+
             sendHigh(500);
         }
     }
@@ -166,8 +167,9 @@ namespace swi
         }
         setWireDirection(SENDING);
         // repeat the frame 8 times
-        for (uint8_t occurrence = 0; occurrence < 1; occurrence++)
+        for (uint8_t occurrence = 0; occurrence < 2; occurrence++)
         {
+
             sendHeaderCmdFrame();
             for (uint8_t frameIndex = 0; frameIndex < size; frameIndex++)
             {
@@ -197,7 +199,7 @@ namespace swi
         return (triggerDeltaTime > (HIGH_START_FRAME - DURATION_MARGIN)) && (triggerDeltaTime < (HIGH_START_FRAME + DURATION_MARGIN));
     }
 
-    uint8_t readBit(void)
+    inline uint8_t readBit(void)
     {
 
         if ((triggerDeltaTime > (HIGH_1_TIME - DURATION_MARGIN)) && (triggerDeltaTime < (HIGH_1_TIME + DURATION_MARGIN)))
@@ -213,7 +215,7 @@ namespace swi
      * @note
      * @retval
      */
-    boolean silence(void)
+    inline boolean silence(void)
     {
         // Il faut bloquer les interruptions car le calcul ci-dessous peut être modifié par une interruption
         cli(); // stop interrupts
@@ -264,6 +266,7 @@ namespace swi
 
         if (triggered)
         {
+            // esphome::ESP_LOGD(__FILE__, "%d, %d", lastTriggerStatus, triggerDeltaTime);
 
             triggered = false;
             if (lastTriggerStatus == LOW)
@@ -279,7 +282,7 @@ namespace swi
                     frameCnt = 0;
                     phase = IN_FRAME;
                     startByte = true;
-                    esphome::ESP_LOGD(__FILE__, "New Frame");
+                    // esphome::ESP_LOGD(__FILE__, "New Frame");
 
                     return false;
                 }
@@ -305,7 +308,7 @@ namespace swi
                     read_frame[frameCnt++] = newByte;
                     if (frameCnt >= MAX_FRAME_SIZE)
                     {
-                        esphome::ESP_LOGE(__FILE__, "Frame overflow");
+                        // esphome::ESP_LOGE(__FILE__, "Frame overflow");
                         frameCnt = 0;
                     }
                     return false;
@@ -316,7 +319,7 @@ namespace swi
             { // Inutile pour l'instant ...
                 phase = START_FRAME;
 
-                esphome::ESP_LOGD(__FILE__, "End of silence");
+                // esphome::ESP_LOGD(__FILE__, "End of silence");
             }
         } // if triggered
         return false;
