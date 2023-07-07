@@ -58,6 +58,7 @@ namespace esphome
             frame[13] = settings.stopWhenReachedDelay;
             frame[14] = 0x00; // SCHEDULE SETTING OFF
             frame[15] = this->computeChecksum(frame, HP_FRAME_LEN);
+            swi::sendFrame(frame, HP_FRAME_LEN);
         }
 
         bool HeatPumpController::decode(uint8_t frame[])

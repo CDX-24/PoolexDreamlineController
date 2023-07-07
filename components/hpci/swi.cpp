@@ -147,7 +147,7 @@ namespace swi
         // to avoid software watchdog reset due to the long 2000ms delay, we cut the 2000ms in 4x500ms and feed the wdt each time.
         for (uint8_t i = 0; i < 4; i++)
         {
-
+            yield();
             sendHigh(500);
         }
     }
@@ -166,8 +166,7 @@ namespace swi
             frame_send[i] = reverseBits(frame[i]); // 1's complement before sending
         }
         setWireDirection(SENDING);
-        // repeat the frame 8 times
-        for (uint8_t occurrence = 0; occurrence < 2; occurrence++)
+        for (uint8_t occurrence = 0; occurrence < SEND_MSG_OCCURENCE; occurrence++)
         {
 
             sendHeaderCmdFrame();
