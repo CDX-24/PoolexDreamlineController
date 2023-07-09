@@ -24,7 +24,8 @@ namespace esphome
       float getWaterOutTemp();
       float getOutdoorTemp();
       bool getOn();
-      bool getRunning() : uint16_t getErrorCode();
+      bool getRunning();
+      uint16_t getErrorCode();
 
     protected:
       settings::hpInfo hpData;
