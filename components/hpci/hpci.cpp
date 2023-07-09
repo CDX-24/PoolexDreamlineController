@@ -156,6 +156,11 @@ namespace esphome
             return this->hpData.on;
         }
 
+        bool HeatPumpController::getRunning()
+        {
+            return (this->hpData.timeSinceFan > 0);
+        }
+
         uint16_t HeatPumpController::getErrorCode()
         {
             return this->hpData.errorCode;
