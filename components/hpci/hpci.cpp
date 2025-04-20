@@ -97,7 +97,7 @@ namespace esphome
                 this->hpData.stopWhenReachedDelay = frame[13];
                 return true;
             }
-            esphome::ESP_LOGW("HPCI", "UNKNOWN MESSAGE !");
+            ESP_LOGW("HPCI", "UNKNOWN MESSAGE !");
             return false;
         }
 
@@ -116,7 +116,7 @@ namespace esphome
                 }
                 else
                 {
-                    esphome::ESP_LOGW("HPCI", "Invalid or corrupt frame");
+                    ESP_LOGW("HPCI", "Invalid or corrupt frame");
                 }
             }
         }

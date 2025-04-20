@@ -189,7 +189,7 @@ namespace swi
 
             sendSpaceCmdFramesGroup();
         }
-        esphome::ESP_LOGI("swi", "Successfully sent frame !");
+        ESP_LOGI("swi", "Successfully sent frame !");
         setWireDirection(RECEIVING);
     }
 
@@ -205,7 +205,7 @@ namespace swi
             return 1;
         if ((triggerDeltaTime > (HIGH_0_TIME - DURATION_MARGIN)) && (triggerDeltaTime < (HIGH_0_TIME + DURATION_MARGIN)))
             return 0;
-        esphome::ESP_LOGW("SWI", "Incompatible duration !");
+        ESP_LOGW("SWI", "Incompatible duration !");
         return 0xff;
     }
 
@@ -307,7 +307,7 @@ namespace swi
                     read_frame[frameCnt++] = newByte;
                     if (frameCnt >= MAX_FRAME_SIZE)
                     {
-                        // esphome::ESP_LOGE("SWI", "Frame overflow");
+                        // ESP_LOGE("SWI", "Frame overflow");
                         frameCnt = 0;
                     }
                     return false;
