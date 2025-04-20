@@ -189,7 +189,7 @@ namespace swi
 
             sendSpaceCmdFramesGroup();
         }
-        esphome::ESP_LOGI(__FILE__, "Successfully sent frame !");
+        esphome::ESP_LOGI("swi", "Successfully sent frame !");
         setWireDirection(RECEIVING);
     }
 
@@ -205,7 +205,7 @@ namespace swi
             return 1;
         if ((triggerDeltaTime > (HIGH_0_TIME - DURATION_MARGIN)) && (triggerDeltaTime < (HIGH_0_TIME + DURATION_MARGIN)))
             return 0;
-        esphome::ESP_LOGW(__FILE__, "Incompatible duration !");
+        esphome::ESP_LOGW("SWI", "Incompatible duration !");
         return 0xff;
     }
 
@@ -265,7 +265,7 @@ namespace swi
 
         if (triggered)
         {
-            // esphome::ESP_LOGD(__FILE__, "%d, %d", lastTriggerStatus, triggerDeltaTime);
+            // esphome::ESP_LOGD("SWI", "%d, %d", lastTriggerStatus, triggerDeltaTime);
 
             triggered = false;
             if (lastTriggerStatus == LOW)
@@ -281,7 +281,7 @@ namespace swi
                     frameCnt = 0;
                     phase = IN_FRAME;
                     startByte = true;
-                    // esphome::ESP_LOGD(__FILE__, "New Frame");
+                    // esphome::ESP_LOGD("SWI", "New Frame");
 
                     return false;
                 }
@@ -307,7 +307,7 @@ namespace swi
                     read_frame[frameCnt++] = newByte;
                     if (frameCnt >= MAX_FRAME_SIZE)
                     {
-                        // esphome::ESP_LOGE(__FILE__, "Frame overflow");
+                        // esphome::ESP_LOGE("SWI", "Frame overflow");
                         frameCnt = 0;
                     }
                     return false;
@@ -318,7 +318,7 @@ namespace swi
             { // Inutile pour l'instant ...
                 phase = START_FRAME;
 
-                // esphome::ESP_LOGD(__FILE__, "End of silence");
+                // esphome::ESP_LOGD("SWI", "End of silence");
             }
         } // if triggered
         return false;

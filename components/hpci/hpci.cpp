@@ -30,7 +30,7 @@ namespace esphome
             this->hpSettings = defaultSettings;
             this->sendControl(this->hpSettings);
             swi::setWireDirection(swi::RECEIVING);
-            esphome::ESP_LOGD(__FILE__, "Succesful setup !");
+            esphome::ESP_LOGD("HPCI", "Succesful setup !");
         }
 
         void HeatPumpController::sendControl(settings::ctrlSettings settings)
@@ -97,7 +97,7 @@ namespace esphome
                 this->hpData.stopWhenReachedDelay = frame[13];
                 return true;
             }
-            esphome::ESP_LOGW(__FILE__, "UNKNOWN MESSAGE !");
+            esphome::ESP_LOGW("HPCI", "UNKNOWN MESSAGE !");
             return false;
         }
 
@@ -109,14 +109,14 @@ namespace esphome
 
                 if (this->frameIsValid(swi::read_frame, swi::frameCnt))
                 {
-                    esphome::ESP_LOGD(__FILE__, "Got a frame");
+                    esphome::ESP_LOGD("HPCI", "Got a frame");
                     this->decode(swi::read_frame);
-                    esphome::ESP_LOGD(__FILE__, "PAC %s, temp target: %d", (this->hpData.on ? "ON" : "OFF"), this->hpData.targetTemp);
-                    esphome::ESP_LOGD(__FILE__, "Water temp IN %d, Water temp OUT: %d", this->hpData.waterTempIn, this->hpData.waterTempOut);
+                    esphome::ESP_LOGD("HPCI", "PAC %s, temp target: %d", (this->hpData.on ? "ON" : "OFF"), this->hpData.targetTemp);
+                    esphome::ESP_LOGD("HPCI", "Water temp IN %d, Water temp OUT: %d", this->hpData.waterTempIn, this->hpData.waterTempOut);
                 }
                 else
                 {
-                    esphome::ESP_LOGW(__FILE__, "Invalid or corrupt frame");
+                    esphome::ESP_LOGW("HPCI", "Invalid or corrupt frame");
                 }
             }
         }
