@@ -265,7 +265,7 @@ namespace swi
 
         if (triggered)
         {
-            // esphome::ESP_LOGD("SWI", "%d, %d", lastTriggerStatus, triggerDeltaTime);
+            // ESP_LOGD("SWI", "%d, %d", lastTriggerStatus, triggerDeltaTime);
 
             triggered = false;
             if (lastTriggerStatus == LOW)
@@ -281,7 +281,7 @@ namespace swi
                     frameCnt = 0;
                     phase = IN_FRAME;
                     startByte = true;
-                    // esphome::ESP_LOGD("SWI", "New Frame");
+                    // ESP_LOGD("SWI", "New Frame");
 
                     return false;
                 }
@@ -318,7 +318,7 @@ namespace swi
             { // Inutile pour l'instant ...
                 phase = START_FRAME;
 
-                // esphome::ESP_LOGD("SWI", "End of silence");
+                // ESP_LOGD("SWI", "End of silence");
             }
         } // if triggered
         return false;

@@ -30,7 +30,7 @@ namespace esphome
             this->hpSettings = defaultSettings;
             this->sendControl(this->hpSettings);
             swi::setWireDirection(swi::RECEIVING);
-            esphome::ESP_LOGD("HPCI", "Succesful setup !");
+            ESP_LOGD("HPCI", "Succesful setup !");
         }
 
         void HeatPumpController::sendControl(settings::ctrlSettings settings)
@@ -109,10 +109,10 @@ namespace esphome
 
                 if (this->frameIsValid(swi::read_frame, swi::frameCnt))
                 {
-                    esphome::ESP_LOGD("HPCI", "Got a frame");
+                    ESP_LOGD("HPCI", "Got a frame");
                     this->decode(swi::read_frame);
-                    esphome::ESP_LOGD("HPCI", "PAC %s, temp target: %d", (this->hpData.on ? "ON" : "OFF"), this->hpData.targetTemp);
-                    esphome::ESP_LOGD("HPCI", "Water temp IN %d, Water temp OUT: %d", this->hpData.waterTempIn, this->hpData.waterTempOut);
+                    ESP_LOGD("HPCI", "PAC %s, temp target: %d", (this->hpData.on ? "ON" : "OFF"), this->hpData.targetTemp);
+                    ESP_LOGD("HPCI", "Water temp IN %d, Water temp OUT: %d", this->hpData.waterTempIn, this->hpData.waterTempOut);
                 }
                 else
                 {
