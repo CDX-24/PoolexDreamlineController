@@ -86,7 +86,7 @@ namespace swi
         digitalWrite(PIN, HIGH);
         unsigned long start = micros();
         while (micros() - start < ms * 1000) {
-            App.feed_wdt(); // Feed the watchdog to prevent resets
+            esphome::App.feed_wdt(); // Feed the watchdog to prevent resets
             yield();        // Allow ESPHome to process other tasks
         }
     }
@@ -101,7 +101,7 @@ namespace swi
         digitalWrite(PIN, LOW);
         unsigned long start = micros();
         while (micros() - start < ms * 1000) {
-            App.feed_wdt(); // Feed the watchdog to prevent resets
+            esphome::App.feed_wdt(); // Feed the watchdog to prevent resets
             yield();        // Allow ESPHome to process other tasks
         }
     }
@@ -156,7 +156,7 @@ namespace swi
         // to avoid software watchdog reset due to the long 2000ms delay, we cut the 2000ms in 4x500ms and feed the wdt each time.
         for (uint8_t i = 0; i < 4; i++)
         {
-            App.feed_wdt(); // Feed the watchdog
+            esphome::App.feed_wdt(); // Feed the watchdog
             sendHigh(500);
         }
     }
