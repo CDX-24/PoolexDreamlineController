@@ -15,6 +15,13 @@ namespace swi
     uint8_t read_frame[MAX_FRAME_SIZE];
     uint8_t frameCnt;
 
+    // Add a counter for incompatible durations
+    static uint8_t incompatible_duration_count = 0;
+    static const uint8_t MAX_INCOMPATIBLE_DURATION_COUNT = 5; // Threshold for reset
+
+    // Reference to the HeatPumpController instance to resend settings
+    extern esphome::hpci::HeatPumpController *heat_pump_controller;
+
     /**
      * @brief
      *
@@ -209,13 +216,37 @@ namespace swi
 
     inline uint8_t readBit(void)
     {
-
         if ((triggerDeltaTime > (HIGH_1_TIME - DURATION_MARGIN)) && (triggerDeltaTime < (HIGH_1_TIME + DURATION_MARGIN)))
+        {
+            incompatible_duration_count = 0; // Reset counter on valid data
             return 1;
+        }
         if ((triggerDeltaTime > (HIGH_0_TIME - DURATION_MARGIN)) && (triggerDeltaTime < (HIGH_0_TIME + DURATION_MARGIN)))
+        {
+            incompatible_duration_count = 0; // Reset counter on valid data
             return 0;
-        ESP_LOGW("SWI", "Incompatible duration !");
-        return 0xff;
+        }
+
+        // Increment the counter for incompatible durations
+        incompatible_duration_count++;
+        ESP_LOGW("SWI", "Incompatible duration! Count: %d", incompatible_duration_count);
+
+        // Check if the threshold is exceeded
+        if (incompatible_duration_count >= MAX_INCOMPATIBLE_DURATION_COUNT)
+        {
+            ESP_LOGE("SWI", "Too many incompatible durations. Resetting connection...");
+            incompatible_duration_count = 0; // Reset the counter
+
+            // Reset the connection and resend settings
+            setWireDirection(RECEIVING); // Ensure we're in receiving mode
+            if (heat_pump_controller != nullptr)
+            {
+                heat_pump_controller->sendControl(heat_pump_controller->hpSettings);
+                ESP_LOGI("SWI", "Settings resent successfully.");
+            }
+        }
+
+        return 0xff; // Return invalid bit
     }
 
     /**

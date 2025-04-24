@@ -4,12 +4,15 @@ namespace esphome
 {
     namespace hpci
     {
+        HeatPumpController *heat_pump_controller = nullptr;
+
         // uint8_t HeatPumpController::frame[HP_FRAME_LEN];
         // hpInfo HeatPumpController::hpData;
         uint8_t lastDataType;
 
         void HeatPumpController::setup()
         {
+            heat_pump_controller = this; // Assign the instance to the global reference
             lastDataType = 0;
             this->high_freq_.start();
             settings::ctrlSettings defaultSettings = {
