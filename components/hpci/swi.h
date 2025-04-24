@@ -78,5 +78,9 @@ namespace swi
     boolean longSilence();
     boolean readFrame();
 
+    typedef void (*ResetCallback)();
+
+    // Function to set the reset callback
+    void setResetCallback(ResetCallback callback);
 }
 #endif // __SWI_H__

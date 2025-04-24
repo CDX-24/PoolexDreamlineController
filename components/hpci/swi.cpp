@@ -19,8 +19,12 @@ namespace swi
     static uint8_t incompatible_duration_count = 0;
     static const uint8_t MAX_INCOMPATIBLE_DURATION_COUNT = 5; // Threshold for reset
 
-    // Reference to the HeatPumpController instance to resend settings
-    extern esphome::hpci::HeatPumpController *heat_pump_controller;
+    static ResetCallback reset_callback = nullptr; // Pointer to the reset callback
+
+    void setResetCallback(ResetCallback callback)
+    {
+        reset_callback = callback;
+    }
 
     /**
      * @brief
@@ -236,15 +240,13 @@ namespace swi
         // Check if the threshold is exceeded
         if (incompatible_duration_count >= MAX_INCOMPATIBLE_DURATION_COUNT)
         {
-            ESP_LOGE("SWI", "Too many incompatible durations. Resetting connection...");
+            ESP_LOGE("SWI", "Too many incompatible durations. Triggering reset...");
             incompatible_duration_count = 0; // Reset the counter
 
-            // Reset the connection and resend settings
-            setWireDirection(RECEIVING); // Ensure we're in receiving mode
-            if (heat_pump_controller != nullptr)
+            // Trigger the reset callback if set
+            if (reset_callback != nullptr)
             {
-                heat_pump_controller->sendControl(heat_pump_controller->hpSettings);
-                ESP_LOGI("SWI", "Settings resent successfully.");
+                reset_callback();
             }
         }
 
