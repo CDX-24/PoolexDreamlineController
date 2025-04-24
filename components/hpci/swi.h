@@ -1,5 +1,6 @@
 #ifndef __SWI_H__
 #define __SWI_H__
+#include <functional> // Include for std::function
 #include "esphome.h"
 
 namespace swi
@@ -78,7 +79,7 @@ namespace swi
     boolean longSilence();
     boolean readFrame();
 
-    typedef void (*ResetCallback)();
+    typedef std::function<void()> ResetCallback; // Use std::function for the callback
 
     // Function to set the reset callback
     void setResetCallback(ResetCallback callback);

@@ -19,7 +19,7 @@ namespace swi
     static uint8_t incompatible_duration_count = 0;
     static const uint8_t MAX_INCOMPATIBLE_DURATION_COUNT = 5; // Threshold for reset
 
-    static ResetCallback reset_callback = nullptr; // Pointer to the reset callback
+    static ResetCallback reset_callback = nullptr; // Use std::function for the callback
 
     void setResetCallback(ResetCallback callback)
     {
@@ -244,7 +244,7 @@ namespace swi
             incompatible_duration_count = 0; // Reset the counter
 
             // Trigger the reset callback if set
-            if (reset_callback != nullptr)
+            if (reset_callback)
             {
                 reset_callback();
             }
