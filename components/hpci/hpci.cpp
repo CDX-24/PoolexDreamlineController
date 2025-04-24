@@ -6,9 +6,11 @@ namespace esphome
     {
         // uint8_t HeatPumpController::frame[HP_FRAME_LEN];
         // hpInfo HeatPumpController::hpData;
+        uint8_t lastDataType;
 
         void HeatPumpController::setup()
         {
+            lastDataType = 0;
             this->high_freq_.start();
             settings::ctrlSettings defaultSettings = {
                 29,                  // uint8_t targetTemp;
@@ -81,6 +83,7 @@ namespace esphome
                 this->hpData.maximumTemp = frame[12];
                 this->hpData.stopWhenReachedDelay = frame[13];
                 // this->hpData.targetTemp = frame[14];
+                lastDataType = 0xD2;
                 return true;
             }
             else if (frame[0] == 0xDD)
@@ -95,6 +98,7 @@ namespace esphome
                 this->hpData.timeSincePump = frame[11];
                 this->hpData.maximumTemp = frame[12];
                 this->hpData.stopWhenReachedDelay = frame[13];
+                lastDataType = 0xDD;
                 return true;
             }
             ESP_LOGW("HPCI", "UNKNOWN MESSAGE !");
@@ -109,10 +113,21 @@ namespace esphome
 
                 if (this->frameIsValid(swi::read_frame, swi::frameCnt))
                 {
-                    ESP_LOGD("HPCI", "Got a frame");
+                    ESP_LOGI("HPCI", "Frame Data (%s):", lastDataType == 0xD2 ? "Control" : "Status");
                     this->decode(swi::read_frame);
-                    ESP_LOGD("HPCI", "PAC %s, temp target: %d", (this->hpData.on ? "ON" : "OFF"), this->hpData.targetTemp);
-                    ESP_LOGD("HPCI", "Water temp IN %d, Water temp OUT: %d", this->hpData.waterTempIn, this->hpData.waterTempOut);
+                    if(lastDataType == 0xD2)
+                    {
+                        ESP_LOGI("HPCI", "PAC %s, target: %d", (this->hpData.on ? "ON" : "OFF"), this->hpData.targetTemp);
+                        ESP_LOGI("HPCI", "Defrost Auto Enable Time %d, Defrost Enable Temp: %d", this->hpData.defrostAutoEnableTime, this->hpData.defrostEnableTemp);
+                        ESP_LOGI("HPCI", "Defrost Disable Temp %d, Defrost Max Duration: %d", this->hpData.defrostDisableTemp, this->hpData.defrostMaxDuration);
+                    }
+                    else if(lastDataType == 0xDD)
+                    {
+                        ESP_LOGI("HPCI", "Water temp IN %d, Water temp OUT: %d", this->hpData.waterTempIn, this->hpData.waterTempOut);
+                        ESP_LOGI("HPCI", "Air Outlet Temp: %d, Outdoor Air Temp: %d", this->hpData.airOutletTemp, this->hpData.outdoorAirTemp);
+                        ESP_LOGI("HPCI", "Error Code %d, Time Since Fan: %d", this->hpData.errorCode, this->hpData.timeSinceFan);
+                        ESP_LOGI("HPCI", "Time Since Pump %d", this->hpData.timeSincePump);
+                    }
                 }
                 else
                 {
