@@ -49,12 +49,19 @@ namespace swi
      */
     IRAM_ATTR void isrCallback(void)
     {
+        unsigned long now = micros();
+        unsigned long delta = delaisWithoutRollover(triggerTime, now);
+
+        // Ignore glitches or invalid durations
+        if (delta < 100 || delta > MAX_TIME) {
+            return;
+        }
+
         lastTriggerTime = triggerTime;
-        triggerTime = micros();
-        triggerDeltaTime = delaisWithoutRollover(lastTriggerTime, triggerTime);
+        triggerTime = now;
+        triggerDeltaTime = delta;
         lastTriggerStatus = triggerStatus;
         triggerStatus = digitalRead(PIN);
-        ESP_LOGD("SWI", "Trigger Delta Time: %lu, Status: %d", triggerDeltaTime, triggerStatus);
         triggered = true;
     }
     /**
@@ -157,7 +164,7 @@ namespace swi
         for (uint8_t i = 0; i < 4; i++)
         {
             esphome::App.feed_wdt(); // Feed the watchdog
-            sendHigh(500);
+            sendHigh(250);
         }
     }
 
