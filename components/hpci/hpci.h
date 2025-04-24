@@ -28,6 +28,9 @@ namespace esphome
       bool getRunning();
       uint16_t getErrorCode();
 
+      // New function to handle reset logic
+      void handleReset();
+
     protected:
       settings::hpInfo hpData;
       settings::ctrlSettings hpSettings;

@@ -13,18 +13,13 @@ namespace esphome
         void HeatPumpController::setup()
         {
             // Register the reset callback with swi
-            swi::setResetCallback([]() {
-                ESP_LOGI("HPCI", "Reset triggered by SWI. Resending settings...");
-                auto *controller = App.get_component<HeatPumpController>();
-                if (controller != nullptr)
-                {
-                    controller->sendControl(controller->hpSettings);
-                }
+            swi::setResetCallback([this]() {
+                this->handleReset();
             });
 
-            heat_pump_controller = this; // Assign the instance to the global reference
             lastDataType = 0;
             this->high_freq_.start();
+
             settings::ctrlSettings defaultSettings = {
                 29,                  // uint8_t targetTemp;
                 40,                  // uint8_t defrostAutoEnableTime;
@@ -45,7 +40,13 @@ namespace esphome
             this->hpSettings = defaultSettings;
             this->sendControl(this->hpSettings);
             swi::setWireDirection(swi::RECEIVING);
-            ESP_LOGD("HPCI", "Succesful setup !");
+            ESP_LOGD("HPCI", "Successful setup!");
+        }
+
+        void HeatPumpController::handleReset()
+        {
+            ESP_LOGI("HPCI", "Reset triggered by SWI. Resending settings...");
+            this->sendControl(this->hpSettings);
         }
 
         void HeatPumpController::sendControl(settings::ctrlSettings settings)
