@@ -49,19 +49,12 @@ namespace swi
      */
     IRAM_ATTR void isrCallback(void)
     {
-        unsigned long now = micros();
-        unsigned long delta = delaisWithoutRollover(triggerTime, now);
-
-        // Ignore glitches or invalid durations
-        if (delta < 100 || delta > MAX_TIME) {
-            return;
-        }
-
         lastTriggerTime = triggerTime;
-        triggerTime = now;
-        triggerDeltaTime = delta;
+        triggerTime = micros();
+        triggerDeltaTime = delaisWithoutRollover(lastTriggerTime, triggerTime);
         lastTriggerStatus = triggerStatus;
         triggerStatus = digitalRead(PIN);
+        ESP_LOGD("SWI", "Trigger Delta Time: %lu, Status: %d", triggerDeltaTime, triggerStatus);
         triggered = true;
     }
     /**
