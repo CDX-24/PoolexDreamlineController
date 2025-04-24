@@ -54,6 +54,7 @@ namespace swi
         triggerDeltaTime = delaisWithoutRollover(lastTriggerTime, triggerTime);
         lastTriggerStatus = triggerStatus;
         triggerStatus = digitalRead(PIN);
+        ESP_LOGD("SWI", "Trigger Delta Time: %lu, Status: %d", triggerDeltaTime, triggerStatus);
         triggered = true;
     }
     /**
@@ -83,7 +84,11 @@ namespace swi
     void sendHigh(uint16_t ms)
     {
         digitalWrite(PIN, HIGH);
-        delayMicroseconds(ms * 1000);
+        unsigned long start = micros();
+        while (micros() - start < ms * 1000) {
+            App.feed_wdt(); // Feed the watchdog to prevent resets
+            yield();        // Allow ESPHome to process other tasks
+        }
     }
 
     /**
@@ -94,7 +99,11 @@ namespace swi
     void sendLow(uint16_t ms)
     {
         digitalWrite(PIN, LOW);
-        delayMicroseconds(ms * 1000);
+        unsigned long start = micros();
+        while (micros() - start < ms * 1000) {
+            App.feed_wdt(); // Feed the watchdog to prevent resets
+            yield();        // Allow ESPHome to process other tasks
+        }
     }
 
     /**
@@ -147,7 +156,7 @@ namespace swi
         // to avoid software watchdog reset due to the long 2000ms delay, we cut the 2000ms in 4x500ms and feed the wdt each time.
         for (uint8_t i = 0; i < 4; i++)
         {
-            yield();
+            App.feed_wdt(); // Feed the watchdog
             sendHigh(500);
         }
     }
@@ -307,8 +316,9 @@ namespace swi
                     read_frame[frameCnt++] = newByte;
                     if (frameCnt >= MAX_FRAME_SIZE)
                     {
-                        // ESP_LOGE("SWI", "Frame overflow");
+                        ESP_LOGE("SWI", "Frame overflow detected. Resetting frame counter.");
                         frameCnt = 0;
+                        return false;
                     }
                     return false;
                 }
