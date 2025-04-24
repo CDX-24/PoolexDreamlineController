@@ -19,6 +19,7 @@ namespace esphome
       void loop() override;
       void setTargetTemp(uint16_t value);
       void setOn(bool value);
+      void sendControl(settings::ctrlSettings settings);
       float getTargetTemp();
       float getWaterInTemp();
       float getWaterOutTemp();
@@ -35,7 +36,6 @@ namespace esphome
       bool checksumIsValid(uint8_t frame[], uint8_t size);
       uint8_t computeChecksum(uint8_t frame[], uint8_t size);
       bool frameIsValid(uint8_t frame[], uint8_t size);
-      void sendControl(settings::ctrlSettings settings);
 
       bool decode(uint8_t frame[]);
     };
