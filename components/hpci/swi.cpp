@@ -92,9 +92,10 @@ namespace swi
     {
         digitalWrite(PIN, HIGH);
         unsigned long start = micros();
-        while (micros() - start < ms * 1000) {
+        while (micros() - start < ms * 1000)
+        {
             esphome::App.feed_wdt(); // Feed the watchdog to prevent resets
-            yield();        // Allow ESPHome to process other tasks
+            yield();                 // Allow ESPHome to process other tasks
         }
     }
 
@@ -107,9 +108,10 @@ namespace swi
     {
         digitalWrite(PIN, LOW);
         unsigned long start = micros();
-        while (micros() - start < ms * 1000) {
+        while (micros() - start < ms * 1000)
+        {
             esphome::App.feed_wdt(); // Feed the watchdog to prevent resets
-            yield();        // Allow ESPHome to process other tasks
+            yield();                 // Allow ESPHome to process other tasks
         }
     }
 

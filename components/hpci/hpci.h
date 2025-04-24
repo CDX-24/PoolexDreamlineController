@@ -27,11 +27,11 @@ namespace esphome
       bool getRunning();
       uint16_t getErrorCode();
 
-    protected:
       settings::hpInfo hpData;
       settings::ctrlSettings hpSettings;
       HighFrequencyLoopRequester high_freq_;
 
+    protected:
       bool checksumIsValid(uint8_t frame[], uint8_t size);
       uint8_t computeChecksum(uint8_t frame[], uint8_t size);
       bool frameIsValid(uint8_t frame[], uint8_t size);

@@ -118,13 +118,13 @@ namespace esphome
                 {
                     ESP_LOGI("HPCI", "Frame Data (%s):", lastDataType == 0xD2 ? "Control" : "Status");
                     this->decode(swi::read_frame);
-                    if(lastDataType == 0xD2)
+                    if (lastDataType == 0xD2)
                     {
                         ESP_LOGD("HPCI", "PAC %s, target: %d", (this->hpData.on ? "ON" : "OFF"), this->hpData.targetTemp);
                         ESP_LOGD("HPCI", "Defrost Auto Enable Time %d, Defrost Enable Temp: %d", this->hpData.defrostAutoEnableTime, this->hpData.defrostEnableTemp);
                         ESP_LOGD("HPCI", "Defrost Disable Temp %d, Defrost Max Duration: %d", this->hpData.defrostDisableTemp, this->hpData.defrostMaxDuration);
                     }
-                    else if(lastDataType == 0xDD)
+                    else if (lastDataType == 0xDD)
                     {
                         ESP_LOGD("HPCI", "Water temp IN %d, Water temp OUT: %d", this->hpData.waterTempIn, this->hpData.waterTempOut);
                         ESP_LOGD("HPCI", "Air Outlet Temp: %d, Outdoor Air Temp: %d", this->hpData.airOutletTemp, this->hpData.outdoorAirTemp);
