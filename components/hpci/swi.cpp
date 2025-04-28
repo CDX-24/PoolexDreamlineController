@@ -323,7 +323,6 @@ namespace swi
             }
             else if (triggered && lastTriggerStatus == HIGH)
             {
-                triggered = false;
                 if (startByte)
                 {
                     newByte = 0;
@@ -358,6 +357,7 @@ namespace swi
             error_count++;
             clear_reception_flags();
         }
+        triggered = false;
     }
-    triggered = false;
+    
 }
