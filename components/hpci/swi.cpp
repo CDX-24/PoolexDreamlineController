@@ -18,6 +18,7 @@ namespace swi
 
     uint8_t read_frame[MAX_FRAME_SIZE];
     uint8_t frameCnt;
+    unsigned long lastLoopTime = 0;
 
     volatile communicationState swi_state = IDLE;
     receiveState swi_receive_state = START_FRAME;
@@ -291,9 +292,9 @@ namespace swi
         static uint8_t cptByte = 0;
         // Log every second
         static unsigned long lastLogTime = 0;
-        static unisnged long previousTime = millis();
-        unsigned long timeDiff = millis() - previousTime;
         unsigned long currentTime = millis();
+        unsigned long timeLoopdiff = currentTime - lastLoopTime;
+        unsigned long lastLoopTime = currentTime;
 
         if (swi_receive_state == START_FRAME)
         {
@@ -304,6 +305,7 @@ namespace swi
                     ESP_LOGI("SWI", "SWI read frame running... (state is %d)", swi_receive_state);
                     ESP_LOGI("SWI", "Trigger status: %d", triggerStatus);
                     ESP_LOGI("SWI", "Last Trigger delta time: %lu", triggerDeltaTime);
+                    ESP_LOGI("SWI", "Time since last loop: %lu", timeLoopdiff);
                     lastLogTime = currentTime;
                 }
                 if (startFrame())

@@ -64,6 +64,7 @@ namespace swi
 
     extern uint8_t read_frame[MAX_FRAME_SIZE];
     extern uint8_t frameCnt;
+    unsigned long lastLoopTime;
 
     /**
      *  Functions
