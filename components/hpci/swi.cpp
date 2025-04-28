@@ -87,7 +87,9 @@ namespace swi
         // Log every second
         if (currentTime - lastLogTime >= 3000)
         {
-            ESP_LOGI("SWI", "SWI loop running... (state is %d, trigger time: %llu (%llu))", swi_state, triggerTime, lastTriggerTime);
+            ESP_LOGI("SWI", "SWI loop running... (state is %d)", swi_state);
+            ESP_LOGI("SWI", "Trigger time: %lu", triggerTime);
+            ESP_LOGI("SWI", "Last Trigger time: %lu", lastTriggerTime);
             lastLogTime = currentTime;
         }
 
