@@ -294,7 +294,7 @@ namespace swi
         static unsigned long lastLogTime = 0;
         unsigned long currentTime = millis();
         unsigned long timeLoopdiff = currentTime - lastLoopTime;
-        unsigned long lastLoopTime = currentTime;
+        lastLoopTime = currentTime;
 
         if (swi_receive_state == START_FRAME)
         {
