@@ -50,21 +50,30 @@ namespace swi
         if (error_count > MAX_ERROR_COUNT)
         {
             error_count = 0;
-            // Handle the error condition here
             ESP_LOGW("SWI", "Error count exceeded! Resetting connection.");
-            swi_setup(); // Reset the state
+            swi_setup();
+            return;
         }
-        if (swi_state == IDLE || swi_state == RECEIVING_DATA)
+
+        switch (swi_state)
         {
-            if(currentDirection != RECEIVING)
+        case IDLE:
+        case RECEIVING_DATA:
+            if (currentDirection != RECEIVING)
             {
                 setWireDirection(RECEIVING);
             }
             readFrame();
-        }
-        else if (swi_state == TRANSMITTING_DATA)
-        {
+            break;
+
+        case TRANSMITTING_DATA:
             // Handle transmission state
+            break;
+
+        default:
+            ESP_LOGE("SWI", "Unknown state encountered!");
+            swi_setup();
+            break;
         }
     }
 
@@ -268,35 +277,28 @@ namespace swi
         return (triggerDeltaTime > (HIGH_START_FRAME - DURATION_MARGIN)) && (triggerDeltaTime < (HIGH_START_FRAME + DURATION_MARGIN));
     }
 
-    inline uint8_t readBit(void)
+    inline uint8_t readBit()
     {
-        if ((triggerDeltaTime > (HIGH_1_TIME - DURATION_MARGIN)) && (triggerDeltaTime < (HIGH_1_TIME + DURATION_MARGIN)))
+        if (triggerDeltaTime > (HIGH_1_TIME - DURATION_MARGIN) && triggerDeltaTime < (HIGH_1_TIME + DURATION_MARGIN))
         {
             return 1;
         }
-        if ((triggerDeltaTime > (HIGH_0_TIME - DURATION_MARGIN)) && (triggerDeltaTime < (HIGH_0_TIME + DURATION_MARGIN)))
+        if (triggerDeltaTime > (HIGH_0_TIME - DURATION_MARGIN) && triggerDeltaTime < (HIGH_0_TIME + DURATION_MARGIN))
         {
             return 0;
         }
 
-        // Increment the counter for incompatible durations
         error_count++;
         ESP_LOGW("SWI", "Incompatible duration! Count: %d", error_count);
-        return 0xff; // Return invalid bit
+        return 0xff; // Invalid bit
     }
 
-    /**
-     * @brief  Check if no signal detected
-     * @note
-     * @retval
-     */
-    inline boolean silence(void)
+    inline boolean silence()
     {
-        // Il faut bloquer les interruptions car le calcul ci-dessous peut être modifié par une interruption
-        cli(); // stop interrupts
+        cli();
         unsigned long delta = delaisWithoutRollover(triggerTime, micros());
-        sei(); // restart Interrupt
-        return (delta > MAX_TIME);
+        sei();
+        return delta > MAX_TIME;
     }
 
     // essaye de détecter le silence de 1s. A vérifier.
@@ -309,23 +311,17 @@ namespace swi
 
     void readFrame()
     {
-
-        // La transition de "IN" à "END" n'est pas déclenché par une interruption, car on ne peut pas attendre la fin d'un silence
-        // qui est de 125 ms ou 1s
-        // mais par l'absence de signal pendant plus de MAX_TIME
-        // Les autres transitions sont déclenchées par les interuptions.
         static boolean startByte = true;
-        static uint8_t newByte;
-        static uint8_t cptByte;
+        static uint8_t newByte = 0;
+        static uint8_t cptByte = 0;
 
-        switch (swi_receive_state)
+        if (swi_receive_state == START_FRAME)
         {
-        case START_FRAME:
             if (triggered && lastTriggerStatus == HIGH)
             {
                 triggered = false;
                 if (startFrame())
-                { // Si on reçoit un signal de démarrage de trame
+                {
                     frameCnt = 0;
                     ESP_LOGI("SWI", "Receiving frame...");
                     swi_receive_state = IN_FRAME;
@@ -333,11 +329,11 @@ namespace swi
                     startByte = true;
                 }
             }
-            break;
-
-        case IN_FRAME:
+        }
+        else if (swi_receive_state == IN_FRAME)
+        {
             if (silence())
-            { // détection de la fin d'une trame par l'arrivé d'un silence
+            {
                 swi_receive_state = END_FRAME;
             }
             else if (triggered && lastTriggerStatus == HIGH)
@@ -350,31 +346,34 @@ namespace swi
                     startByte = false;
                 }
 
-                newByte |= readBit() << cptByte++;
-                // Little Endian. B10001111 vaut 0xF1 et pas 0x8F. Le premier bit transmit est le LSB
-                // En "encodant" tout de suite, on évite l'appel à Bit_Reverse
+                uint8_t bit = readBit();
+                if (bit == 0xff) // Invalid bit
+                {
+                    return;
+                }
+
+                newByte |= bit << cptByte++;
                 if (cptByte == 8)
                 {
                     startByte = true;
-
-                    // we have captured 8 bits, so this 1 uint8_t to add in our trame array
                     read_frame[frameCnt++] = newByte;
+
                     if (frameCnt >= MAX_FRAME_SIZE)
                     {
                         ESP_LOGE("SWI", "Frame overflow detected. Resetting frame counter.");
                         error_count++;
                         clear_reception_flags();
+                        return;
                     }
                 }
             }
-            break;
-
-        case END_FRAME:
+        }
+        else if (swi_receive_state == END_FRAME)
+        {
             frame_available = true;
-            ESP_LOGI("SWI", "Frame received !");
+            ESP_LOGI("SWI", "Frame received!");
             swi_state = IDLE;
             clear_reception_flags();
-            break;
         }
     }
 }
