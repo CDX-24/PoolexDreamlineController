@@ -18,7 +18,7 @@ namespace swi
 
     uint8_t read_frame[MAX_FRAME_SIZE];
     uint8_t frameCnt;
-    
+
     volatile communicationState swi_state = IDLE;
     receiveState swi_receive_state = START_FRAME;
     static uint8_t error_count = 0;
@@ -102,6 +102,7 @@ namespace swi
      */
     IRAM_ATTR void isrCallback(void)
     {
+        ESP_LOGI("SWI", "ISR Callback triggered");
         lastTriggerTime = triggerTime;
         triggerTime = micros();
         triggerDeltaTime = delaisWithoutRollover(lastTriggerTime, triggerTime);
@@ -144,7 +145,7 @@ namespace swi
     void sendHigh(uint16_t ms)
     {
         digitalWrite(PIN, HIGH);
-        waitForDuration(ms * 1000);
+        delayMicroseconds(ms * 1000);
     }
 
     /**
@@ -155,17 +156,7 @@ namespace swi
     void sendLow(uint16_t ms)
     {
         digitalWrite(PIN, LOW);
-        waitForDuration(ms * 1000);
-    }
-
-    void waitForDuration(uint32_t duration_us)
-    {
-        unsigned long start = micros();
-        while (micros() - start < duration_us)
-        {
-            esphome::App.feed_wdt(); // Feed the watchdog to prevent resets
-            yield();                 // Allow ESPHome to process other tasks
-        }
+        delayMicroseconds(ms * 1000);
     }
 
     /**

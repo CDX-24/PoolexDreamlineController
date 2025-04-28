@@ -79,7 +79,6 @@ namespace swi
     void swi_setup(void);
     void swi_loop(void);
     void clear_reception_flags(void);
-    void waitForDuration(uint32_t duration_us);
     void sendHigh(uint16_t ms);
     void sendLow(uint16_t ms);
     void sendBinary0(void);
