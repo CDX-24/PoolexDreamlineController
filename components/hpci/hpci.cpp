@@ -34,6 +34,47 @@ namespace esphome
             ESP_LOGI("HPCI", "Successful setup!");
         }
 
+        void HeatPumpController::loop()
+        {
+            swi::swi_loop();
+
+            if (swi::frame_available)
+            {
+                swi::frame_available = false;
+                ESP_LOGI("HPCI", "Frame received!");
+                if (this->frameIsValid(swi::read_frame, swi::frameCnt))
+                {
+                    ESP_LOGI("HPCI", "Frame Data (%s):", lastDataType == 0xD2 ? "Control" : "Status");
+                    this->decode(swi::read_frame);
+                    if (lastDataType == 0xD2)
+                    {
+                        ESP_LOGD("HPCI", "PAC %s, target: %d", (this->hpData.on ? "ON" : "OFF"), this->hpData.targetTemp);
+                        ESP_LOGD("HPCI", "Defrost Auto Enable Time %d, Defrost Enable Temp: %d", this->hpData.defrostAutoEnableTime, this->hpData.defrostEnableTemp);
+                        ESP_LOGD("HPCI", "Defrost Disable Temp %d, Defrost Max Duration: %d", this->hpData.defrostDisableTemp, this->hpData.defrostMaxDuration);
+                    }
+                    else if (lastDataType == 0xDD)
+                    {
+                        ESP_LOGD("HPCI", "Water temp IN %d, Water temp OUT: %d", this->hpData.waterTempIn, this->hpData.waterTempOut);
+                        ESP_LOGD("HPCI", "Air Outlet Temp: %d, Outdoor Air Temp: %d", this->hpData.airOutletTemp, this->hpData.outdoorAirTemp);
+                        ESP_LOGD("HPCI", "Error Code %d, Time Since Fan: %d", this->hpData.errorCode, this->hpData.timeSinceFan);
+                        ESP_LOGD("HPCI", "Time Since Pump %d", this->hpData.timeSincePump);
+                    }
+                }
+                else
+                {
+                    ESP_LOGW("HPCI", "Invalid or corrupt frame");
+                }
+            }
+            if (this->data_to_send)
+            {
+                if (this->sendControl(this->hpSettings))
+                {
+                    this->data_to_send = false;
+                }
+                // Wait for the data to be sent. Data will be sent when transmission is available.
+            }
+        }
+
         bool HeatPumpController::sendControl(settings::ctrlSettings settings)
         {
             uint8_t frame[HP_FRAME_LEN];
@@ -102,47 +143,6 @@ namespace esphome
             }
             ESP_LOGW("HPCI", "UNKNOWN MESSAGE !");
             return false;
-        }
-
-        void HeatPumpController::loop()
-        {
-            swi::swi_loop();
-
-            if (swi::frame_available)
-            {
-                swi::frame_available = false;
-                ESP_LOGI("HPCI", "Frame received!");
-                if (this->frameIsValid(swi::read_frame, swi::frameCnt))
-                {
-                    ESP_LOGI("HPCI", "Frame Data (%s):", lastDataType == 0xD2 ? "Control" : "Status");
-                    this->decode(swi::read_frame);
-                    if (lastDataType == 0xD2)
-                    {
-                        ESP_LOGD("HPCI", "PAC %s, target: %d", (this->hpData.on ? "ON" : "OFF"), this->hpData.targetTemp);
-                        ESP_LOGD("HPCI", "Defrost Auto Enable Time %d, Defrost Enable Temp: %d", this->hpData.defrostAutoEnableTime, this->hpData.defrostEnableTemp);
-                        ESP_LOGD("HPCI", "Defrost Disable Temp %d, Defrost Max Duration: %d", this->hpData.defrostDisableTemp, this->hpData.defrostMaxDuration);
-                    }
-                    else if (lastDataType == 0xDD)
-                    {
-                        ESP_LOGD("HPCI", "Water temp IN %d, Water temp OUT: %d", this->hpData.waterTempIn, this->hpData.waterTempOut);
-                        ESP_LOGD("HPCI", "Air Outlet Temp: %d, Outdoor Air Temp: %d", this->hpData.airOutletTemp, this->hpData.outdoorAirTemp);
-                        ESP_LOGD("HPCI", "Error Code %d, Time Since Fan: %d", this->hpData.errorCode, this->hpData.timeSinceFan);
-                        ESP_LOGD("HPCI", "Time Since Pump %d", this->hpData.timeSincePump);
-                    }
-                }
-                else
-                {
-                    ESP_LOGW("HPCI", "Invalid or corrupt frame");
-                }
-            }
-            if (this->data_to_send)
-            {
-                if (this->sendControl(this->hpSettings))
-                {
-                    this->data_to_send = false;
-                }
-                // Wait for the data to be sent. Data will be sent when transmission is available.
-            }
         }
 
         void HeatPumpController::setOn(bool value)

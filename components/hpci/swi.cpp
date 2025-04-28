@@ -47,6 +47,16 @@ namespace swi
 
     void swi_loop()
     {
+        static unsigned long lastLogTime = 0;
+        unsigned long currentTime = millis();
+
+        // Log every second
+        if (currentTime - lastLogTime >= 1000)
+        {
+            ESP_LOGI("SWI", "SWI loop running...");
+            lastLogTime = currentTime;
+        }
+
         if (error_count > MAX_ERROR_COUNT)
         {
             error_count = 0;
