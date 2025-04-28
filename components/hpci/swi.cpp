@@ -310,15 +310,14 @@ namespace swi
                     ESP_LOGI("SWI", "Time since last loop: %lu", timeLoopdiff);
                     lastLogTime = currentTime;
                 }
-                if (triggerDeltaTime > (HIGH_START_FRAME - DURATION_MARGIN))
-                    &&(triggerDeltaTime < (HIGH_START_FRAME + DURATION_MARGIN))
-                    {
-                        frameCnt = 0;
-                        ESP_LOGI("SWI", "Receiving frame...");
-                        swi_receive_state = IN_FRAME;
-                        swi_state = RECEIVING_DATA;
-                        startByte = true;
-                    }
+                if ((triggerDeltaTime > (HIGH_START_FRAME - DURATION_MARGIN)) && (triggerDeltaTime < (HIGH_START_FRAME + DURATION_MARGIN)))
+                {
+                    frameCnt = 0;
+                    ESP_LOGI("SWI", "Receiving frame...");
+                    swi_receive_state = IN_FRAME;
+                    swi_state = RECEIVING_DATA;
+                    startByte = true;
+                }
             }
         }
         else if (swi_receive_state == IN_FRAME)
