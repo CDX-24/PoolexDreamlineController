@@ -330,6 +330,7 @@ namespace swi
                 if (startFrame())
                 { // Si on reçoit un signal de démarrage de trame
                     frameCnt = 0;
+                    ESP_LOGI("SWI", "Receeiving frame...");
                     swi_receive_state = IN_FRAME;
                     swi_state = RECEIVING_DATA;
                     startByte = true;
@@ -373,6 +374,7 @@ namespace swi
 
         case END_FRAME:
             frame_available = true;
+            ESP_LOGI("SWI", "Frame received !");
             swi_state = IDLE;
             clear_reception_flags();
             break;
