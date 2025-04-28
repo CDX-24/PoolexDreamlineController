@@ -68,6 +68,7 @@ namespace swi
 
     void clear_reception_flags()
     {
+        ESP_LOGI("SWI", "Clearing reception flags...");
         triggerTime = 0;
         lastTriggerTime = 0;
         triggerDeltaTime = 0;
@@ -86,7 +87,7 @@ namespace swi
         // Log every second
         if (currentTime - lastLogTime >= 3000)
         {
-            ESP_LOGI("SWI", "SWI loop running... (state is %d, trigger time: %llu (%d))", swi_state, triggerTime, triggerTime);
+            ESP_LOGI("SWI", "SWI loop running... (state is %d, trigger time: %llu (%llu))", swi_state, triggerTime, lastTriggerTime);
             lastLogTime = currentTime;
         }
 
