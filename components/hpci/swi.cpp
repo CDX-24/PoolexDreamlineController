@@ -11,19 +11,59 @@ namespace swi
     volatile byte lastTriggerStatus;
 
     volatile boolean triggered = false;
+    volatile wireDirection currentDirection = UNDEFINED;
+
+    volatile boolean frame_available = false;
 
     uint8_t read_frame[MAX_FRAME_SIZE];
     uint8_t frameCnt;
+    communicationState swi_state = IDLE;
+    receiveState swi_receive_state = START_FRAME;
+    uint8_t current_frame[16];
+    uint8_t frame_index = 0;
+    uint8_t bit_index = 0;
+    static uint8_t error_count = 0;
 
-    // Add a counter for incompatible durations
-    static uint8_t incompatible_duration_count = 0;
-    static const uint8_t MAX_INCOMPATIBLE_DURATION_COUNT = 5; // Threshold for reset
-
-    static ResetCallback reset_callback = nullptr; // Use std::function for the callback
-
-    void setResetCallback(ResetCallback callback)
+    void swi_setup()
     {
-        reset_callback = callback;
+        clear_reception_flags();
+        error_count = 0;
+        swi_state = IDLE;
+        frame_available = false;
+        setWireDirection(RECEIVING);
+    }
+
+    void clear_reception_flags()
+    {
+        triggerTime = 0;
+        lastTriggerTime = 0;
+        triggerDeltaTime = 0;
+        triggerStatus = LOW;
+        lastTriggerStatus = LOW;
+        triggered = false;
+        frameCnt = 0;
+        frame_index = 0;
+        bit_index = 0;
+        swi_receive_state = START_FRAME;
+    }
+
+    void swi_loop()
+    {
+        if (error_count > MAX_ERROR_COUNT)
+        {
+            error_count = 0;
+            // Handle the error condition here
+            ESP_LOGW("SWI", "Error count exceeded! Resetting connection.");
+            swi_setup(); // Reset the state
+        }
+        if (swi_state == IDLE || swi_state == RECEIVNG_DATA)
+        {
+            readFrame();
+        }
+        else if (swi_state == TRANSMITTING_DATA)
+        {
+            // Handle transmission state
+        }
     }
 
     /**
@@ -78,11 +118,14 @@ namespace swi
         {
             pinMode(PIN, INPUT_PULLUP);
             attachInterrupt(digitalPinToInterrupt(PIN), isrCallback, CHANGE);
+            currentDirection = RECEIVING;
         }
         else
         {
             detachInterrupt(digitalPinToInterrupt(PIN));
             pinMode(PIN, OUTPUT);
+            clear_reception_flags();
+            currentDirection = SENDING;
         }
     }
 
@@ -94,12 +137,7 @@ namespace swi
     void sendHigh(uint16_t ms)
     {
         digitalWrite(PIN, HIGH);
-        unsigned long start = micros();
-        while (micros() - start < ms * 1000)
-        {
-            esphome::App.feed_wdt(); // Feed the watchdog to prevent resets
-            yield();                 // Allow ESPHome to process other tasks
-        }
+        waitForDuration(ms * 1000);
     }
 
     /**
@@ -110,8 +148,13 @@ namespace swi
     void sendLow(uint16_t ms)
     {
         digitalWrite(PIN, LOW);
+        waitForDuration(ms * 1000);
+    }
+
+    void waitForDuration(uint32_t duration_us)
+    {
         unsigned long start = micros();
-        while (micros() - start < ms * 1000)
+        while (micros() - start < duration_us)
         {
             esphome::App.feed_wdt(); // Feed the watchdog to prevent resets
             yield();                 // Allow ESPHome to process other tasks
@@ -179,39 +222,46 @@ namespace swi
      * @param frame
      * @param size
      */
-    void sendFrame(uint8_t frame[], uint8_t size)
+    boolean sendFrame(uint8_t frame[], uint8_t size)
     {
-        uint8_t frame_send[16];
-        for (uint8_t i = 0; i < size; i++)
+        if (swi_state == IDLE)
         {
-            frame_send[i] = reverseBits(frame[i]); // 1's complement before sending
-        }
-        setWireDirection(SENDING);
-        for (uint8_t occurrence = 0; occurrence < SEND_MSG_OCCURENCE; occurrence++)
-        {
-
-            sendHeaderCmdFrame();
-            for (uint8_t frameIndex = 0; frameIndex < size; frameIndex++)
+            uint8_t frame_send[16];
+            setWireDirection(SENDING);
+            for (uint8_t i = 0; i < size; i++)
             {
-                uint8_t value = frame_send[frameIndex];
-                for (uint8_t bitIndex = 0; bitIndex < 8; bitIndex++)
+                frame_send[i] = reverseBits(frame[i]); // 1's complement before sending
+            }
+            for (uint8_t occurrence = 0; occurrence < SEND_MSG_OCCURENCE; occurrence++)
+            {
+                sendHeaderCmdFrame();
+                for (uint8_t frameIndex = 0; frameIndex < size; frameIndex++)
                 {
-                    uint8_t bit = (value << bitIndex) & B10000000;
-                    if (bit)
+                    uint8_t value = frame_send[frameIndex];
+                    for (uint8_t bitIndex = 0; bitIndex < 8; bitIndex++)
                     {
-                        sendBinary1();
-                    }
-                    else
-                    {
-                        sendBinary0();
+                        uint8_t bit = (value << bitIndex) & B10000000;
+                        if (bit)
+                        {
+                            sendBinary1();
+                        }
+                        else
+                        {
+                            sendBinary0();
+                        }
                     }
                 }
-            }
 
-            sendSpaceCmdFramesGroup();
+                sendSpaceCmdFramesGroup();
+            }
+            ESP_LOGI("SWI", "Successfully sent frame !");
+            setWireDirection(RECEIVING);
+            return true;
         }
-        ESP_LOGI("SWI", "Successfully sent frame !");
-        setWireDirection(RECEIVING);
+        else
+        {
+            return false;
+        }
     }
 
     boolean startFrame(void)
@@ -223,32 +273,16 @@ namespace swi
     {
         if ((triggerDeltaTime > (HIGH_1_TIME - DURATION_MARGIN)) && (triggerDeltaTime < (HIGH_1_TIME + DURATION_MARGIN)))
         {
-            incompatible_duration_count = 0; // Reset counter on valid data
             return 1;
         }
         if ((triggerDeltaTime > (HIGH_0_TIME - DURATION_MARGIN)) && (triggerDeltaTime < (HIGH_0_TIME + DURATION_MARGIN)))
         {
-            incompatible_duration_count = 0; // Reset counter on valid data
             return 0;
         }
 
         // Increment the counter for incompatible durations
-        incompatible_duration_count++;
-        ESP_LOGW("SWI", "Incompatible duration! Count: %d", incompatible_duration_count);
-
-        // Check if the threshold is exceeded
-        if (incompatible_duration_count >= MAX_INCOMPATIBLE_DURATION_COUNT)
-        {
-            ESP_LOGE("SWI", "Too many incompatible durations. Triggering reset...");
-            incompatible_duration_count = 0; // Reset the counter
-
-            // Trigger the reset callback if set
-            if (reset_callback)
-            {
-                reset_callback();
-            }
-        }
-
+        error_count++;
+        ESP_LOGW("SWI", "Incompatible duration! Count: %d", error_count);
         return 0xff; // Return invalid bit
     }
 
@@ -274,64 +308,41 @@ namespace swi
         return read_frame[0] == 0xd1 && read_frame[1] == 0xb1;
     }
 
-    // fonction principale. Lit une trame.
-    // La lecture ne doit pas être bloquante
-    // Renvoit faux tant que la lecture de la trame n'est pas finie.
-    // Renvoit vrai "Dés que" un silence est détecté.
-
     boolean readFrame()
     {
 
-        static uint8_t phase = START_FRAME;
-        // indicateur de phase pour l'état de la lecture : START_TRAME, IN_TRAME, END_TRAME
         // La transition de "IN" à "END" n'est pas déclenché par une interruption, car on ne peut pas attendre la fin d'un silence
         // qui est de 125 ms ou 1s
         // mais par l'absence de signal pendant plus de MAX_TIME
         // Les autres transitions sont déclenchées par les interuptions.
-        // Il faut "profiter" des périodes de silences pour faire des traitements long, comme envoyer les trames
-        // voir ecrire une trame pour donner un ordre ?, pendant le silence de 1s ?
-        // Le silence de 1s semble survenir toutes les 4 trames.
-        // chaque fois que le "header" de la trame est 0xd1 0xb1 ?
-
         static boolean startByte = true;
         static uint8_t newByte;
         static uint8_t cptByte;
 
-        if (phase == IN_FRAME)
+        switch (swi_receive_state)
         {
-            if (silence())
-            { // détection de la fin d'une trame par l'arrivé d'un silence
-                phase = END_FRAME;
-                return true; // Seul cas de return true.
-            }
-        }
-
-        if (triggered)
-        {
-            // ESP_LOGD("SWI", "%d, %d", lastTriggerStatus, triggerDeltaTime);
-
-            triggered = false;
-            if (lastTriggerStatus == LOW)
-            { // On ne décode que avec les états haut.
-                return false;
-            }
-
-            // On démmare à un départ de trame
-            if (phase == START_FRAME)
+        case START_FRAME:
+            if (triggered && lastTriggerStatus == LOW)
             {
+                triggered = false;
                 if (startFrame())
-                { // Si on reçoit un signal de démmarage de trame
+                { // Si on reçoit un signal de démarrage de trame
                     frameCnt = 0;
-                    phase = IN_FRAME;
+                    swi_receive_state = IN_FRAME;
+                    swi_state = RECEIVNG_DATA;
                     startByte = true;
-                    // ESP_LOGD("SWI", "New Frame");
-
-                    return false;
                 }
             }
+            break;
 
-            if (phase == IN_FRAME)
+        case IN_FRAME:
+            if (silence())
+            { // détection de la fin d'une trame par l'arrivé d'un silence
+                swi_receive_state = END_FRAME;
+            }
+            else if (triggered && lastTriggerStatus == LOW)
             {
+                triggered = false;
                 if (startByte)
                 {
                     newByte = 0;
@@ -351,21 +362,18 @@ namespace swi
                     if (frameCnt >= MAX_FRAME_SIZE)
                     {
                         ESP_LOGE("SWI", "Frame overflow detected. Resetting frame counter.");
-                        frameCnt = 0;
-                        return false;
+                        error_count++;
+                        clear_reception_flags();
                     }
-                    return false;
                 }
-            } // if in trame
-
-            if (phase == END_FRAME)
-            { // Inutile pour l'instant ...
-                phase = START_FRAME;
-
-                // ESP_LOGD("SWI", "End of silence");
             }
-        } // if triggered
+            break;
+
+        case END_FRAME:
+            frame_available = true;
+            clear_reception_flags();
+            break;
+        }
         return false;
     }
-
 }

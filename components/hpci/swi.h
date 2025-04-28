@@ -16,23 +16,36 @@ namespace swi
 #define LOW_START_FRAME 9000 // Inutilisé pour l'instant On n'utilise que les états "hauts".
 #define HIGH_START_FRAME 5000
 
-#define DURATION_MARGIN 500 // Marge d'erreur pour les durées.
-
-#define START_FRAME 1 // Indicateur d'état de la lecture d'une trame
-#define IN_FRAME 2
-#define END_FRAME 3
+#define DURATION_MARGIN 300 // Marge d'erreur pour les durées.
 
 #define MAX_TIME 12000
 #define MAX_FRAME_SIZE 20
 
 #define SEND_MSG_OCCURENCE 3
+
+#define MAX_INCOMPATIBLE_DURATION_COUNT 5 // Threshold for reset
     /**
      *  Enums
      */
     enum wireDirection
     {
+        UNDEFINED,
         SENDING,
         RECEIVING
+    };
+
+    enum communicationState
+    {
+        IDLE,
+        RECEIVNG_DATA,
+        TRANSMITTING_DATA
+    };
+
+    enum receiveState
+    {
+        START_FRAME,
+        IN_FRAME,
+        END_FRAME
     };
 
     /**
@@ -47,6 +60,9 @@ namespace swi
     extern volatile byte lastTriggerStatus;
 
     extern volatile boolean triggered;
+    extern volatile wireDirection currentDirection;
+
+    extern volatile boolean frame_available;
 
     extern uint8_t read_frame[MAX_FRAME_SIZE];
     extern uint8_t frameCnt;
@@ -69,7 +85,7 @@ namespace swi
     void sendHeaderCmdFrame(void);
     void sendSpaceCmdFrame(void);
     void sendSpaceCmdFramesGroup(void);
-    void sendFrame(uint8_t frame[], uint8_t size);
+    boolean sendFrame(uint8_t frame[], uint8_t size);
 
     /* ================================================== */
 
@@ -78,10 +94,5 @@ namespace swi
     inline boolean silence(void);
     boolean longSilence();
     boolean readFrame();
-
-    typedef std::function<void()> ResetCallback; // Use std::function for the callback
-
-    // Function to set the reset callback
-    void setResetCallback(ResetCallback callback);
 }
 #endif // __SWI_H__

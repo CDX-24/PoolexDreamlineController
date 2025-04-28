@@ -9,13 +9,10 @@ namespace esphome
         // uint8_t HeatPumpController::frame[HP_FRAME_LEN];
         // hpInfo HeatPumpController::hpData;
         uint8_t lastDataType;
+        volatile bool data_to_send = false;
 
         void HeatPumpController::setup()
         {
-            // Register the reset callback with swi
-            swi::setResetCallback([this]() {
-                this->handleReset();
-            });
 
             lastDataType = 0;
             this->high_freq_.start();
@@ -43,14 +40,7 @@ namespace esphome
             ESP_LOGD("HPCI", "Successful setup!");
         }
 
-        void HeatPumpController::handleReset()
-        {
-            ESP_LOGE("HPCI", "Reset triggered by SWI. Resending settings...");
-            swi::setWireDirection(swi::RECEIVING);
-            this->sendControl(this->hpSettings);
-        }
-
-        void HeatPumpController::sendControl(settings::ctrlSettings settings)
+        bool HeatPumpController::sendControl(settings::ctrlSettings settings)
         {
             uint8_t frame[HP_FRAME_LEN];
             frame[0] = 0xCC; // header
@@ -75,7 +65,7 @@ namespace esphome
             frame[13] = settings.stopWhenReachedDelay;
             frame[14] = 0x00; // SCHEDULE SETTING OFF
             frame[15] = this->computeChecksum(frame, HP_FRAME_LEN);
-            swi::sendFrame(frame, HP_FRAME_LEN);
+            return swi::sendFrame(frame, HP_FRAME_LEN);
         }
 
         bool HeatPumpController::decode(uint8_t frame[])
@@ -122,10 +112,11 @@ namespace esphome
 
         void HeatPumpController::loop()
         {
+            swi::swi_loop();
 
-            if (swi::readFrame())
+            if (swi::frame_available)
             {
-
+                swi::frame_available = false;
                 if (this->frameIsValid(swi::read_frame, swi::frameCnt))
                 {
                     ESP_LOGI("HPCI", "Frame Data (%s):", lastDataType == 0xD2 ? "Control" : "Status");
@@ -149,17 +140,24 @@ namespace esphome
                     ESP_LOGW("HPCI", "Invalid or corrupt frame");
                 }
             }
+            if (this->data_to_send)
+            {
+                if(this->sendControl(this->hpSettings)){
+                    this->data_to_send = false;
+                }
+                // Wait for the data to be sent. Data will be sent when transmission is available.
+            }
         }
 
         void HeatPumpController::setOn(bool value)
         {
             this->hpSettings.on = value;
-            this->sendControl(this->hpSettings);
+            this->data_to_send = true;
         }
         void HeatPumpController::setTargetTemp(uint16_t value)
         {
             this->hpSettings.targetTemp = value;
-            this->sendControl(this->hpSettings);
+            this->data_to_send = true;
         }
         float HeatPumpController::getTargetTemp()
         {

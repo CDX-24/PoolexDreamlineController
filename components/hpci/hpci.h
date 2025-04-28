@@ -14,6 +14,7 @@ namespace esphome
     {
     public:
       void setup() override;
+      extern volatile bool data_to_send;
       float get_setup_priority() const override { return setup_priority::BUS; }
 
       void loop() override;
@@ -28,15 +29,11 @@ namespace esphome
       bool getRunning();
       uint16_t getErrorCode();
 
-      // New function to handle reset logic
-      void handleReset();
-
     protected:
       settings::hpInfo hpData;
       settings::ctrlSettings hpSettings;
       HighFrequencyLoopRequester high_freq_;
 
-    
       bool checksumIsValid(uint8_t frame[], uint8_t size);
       uint8_t computeChecksum(uint8_t frame[], uint8_t size);
       bool frameIsValid(uint8_t frame[], uint8_t size);
