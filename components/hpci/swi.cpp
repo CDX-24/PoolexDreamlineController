@@ -80,18 +80,8 @@ namespace swi
 
     void swi_loop()
     {
-        static unsigned long lastLogTime = 0;
-        unsigned long currentTime = millis();
 
         readFrame();
-        // Log every second
-        if (currentTime - lastLogTime >= 3000)
-        {
-            ESP_LOGI("SWI", "SWI loop running... (state is %d)", swi_state);
-            ESP_LOGI("SWI", "Trigger time: %lu", triggerTime);
-            ESP_LOGI("SWI", "Last Trigger time: %lu", lastTriggerTime);
-            lastLogTime = currentTime;
-        }
 
         if (error_count > MAX_ERROR_COUNT)
         {
@@ -299,6 +289,16 @@ namespace swi
         static boolean startByte = true;
         static uint8_t newByte = 0;
         static uint8_t cptByte = 0;
+        // Log every second
+        static unsigned long lastLogTime = 0;
+        unsigned long currentTime = millis();
+        if (currentTime - lastLogTime >= 3000)
+        {
+            ESP_LOGI("SWI", "SWI read frame running... (state is %d)", swi_receive_state);
+            ESP_LOGI("SWI", "Trigger status: %d", triggerStatus);
+            ESP_LOGI("SWI", "Last Trigger status: %d", lastTriggerStatus);
+            lastLogTime = currentTime;
+        }
 
         if (swi_receive_state == START_FRAME)
         {
