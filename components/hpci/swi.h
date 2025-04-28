@@ -37,7 +37,7 @@ namespace swi
     enum communicationState
     {
         IDLE,
-        RECEIVNG_DATA,
+        RECEIVING_DATA,
         TRANSMITTING_DATA
     };
 
@@ -96,6 +96,6 @@ namespace swi
     inline uint8_t readBit(void);
     inline boolean silence(void);
     boolean longSilence();
-    boolean readFrame();
+    void readFrame();
 }
 #endif // __SWI_H__

@@ -17,7 +17,7 @@ namespace swi
 
     uint8_t read_frame[MAX_FRAME_SIZE];
     uint8_t frameCnt;
-    communicationState swi_state = IDLE;
+    volatile communicationState swi_state = IDLE;
     receiveState swi_receive_state = START_FRAME;
     uint8_t current_frame[16];
     uint8_t frame_index = 0;
@@ -56,7 +56,7 @@ namespace swi
             ESP_LOGW("SWI", "Error count exceeded! Resetting connection.");
             swi_setup(); // Reset the state
         }
-        if (swi_state == IDLE || swi_state == RECEIVNG_DATA)
+        if (swi_state == IDLE || swi_state == RECEIVING_DATA)
         {
             readFrame();
         }
@@ -228,6 +228,7 @@ namespace swi
         {
             uint8_t frame_send[16];
             setWireDirection(SENDING);
+            swi_state = TRANSMITTING_DATA;
             for (uint8_t i = 0; i < size; i++)
             {
                 frame_send[i] = reverseBits(frame[i]); // 1's complement before sending
@@ -256,6 +257,7 @@ namespace swi
             }
             ESP_LOGI("SWI", "Successfully sent frame !");
             setWireDirection(RECEIVING);
+            swi_state = IDLE;
             return true;
         }
         else
@@ -308,7 +310,7 @@ namespace swi
         return read_frame[0] == 0xd1 && read_frame[1] == 0xb1;
     }
 
-    boolean readFrame()
+    void readFrame()
     {
 
         // La transition de "IN" à "END" n'est pas déclenché par une interruption, car on ne peut pas attendre la fin d'un silence
@@ -329,7 +331,7 @@ namespace swi
                 { // Si on reçoit un signal de démarrage de trame
                     frameCnt = 0;
                     swi_receive_state = IN_FRAME;
-                    swi_state = RECEIVNG_DATA;
+                    swi_state = RECEIVING_DATA;
                     startByte = true;
                 }
             }
@@ -371,9 +373,9 @@ namespace swi
 
         case END_FRAME:
             frame_available = true;
+            swi_state = IDLE;
             clear_reception_flags();
             break;
         }
-        return false;
     }
 }
