@@ -254,11 +254,6 @@ namespace swi
         }
     }
 
-    boolean startFrame(void)
-    {
-        return (triggerDeltaTime > (HIGH_START_FRAME - DURATION_MARGIN)) && (triggerDeltaTime < (HIGH_START_FRAME + DURATION_MARGIN));
-    }
-
     inline uint8_t readBit()
     {
         if (triggerDeltaTime > (HIGH_1_TIME - DURATION_MARGIN) && triggerDeltaTime < (HIGH_1_TIME + DURATION_MARGIN))
@@ -299,8 +294,9 @@ namespace swi
         // Log every second
         static unsigned long lastLogTime = 0;
         unsigned long currentTime = millis();
-        unsigned long timeLoopdiff = currentTime - lastLoopTime;
-        lastLoopTime = currentTime;
+        unsigned long currentMicros = micros();
+        unsigned long timeLoopdiff = currentMicros - lastLoopTime;
+        lastLoopTime = currentMicros;
 
         if (swi_receive_state == START_FRAME)
         {
@@ -314,14 +310,15 @@ namespace swi
                     ESP_LOGI("SWI", "Time since last loop: %lu", timeLoopdiff);
                     lastLogTime = currentTime;
                 }
-                if (startFrame())
-                {
-                    frameCnt = 0;
-                    ESP_LOGI("SWI", "Receiving frame...");
-                    swi_receive_state = IN_FRAME;
-                    swi_state = RECEIVING_DATA;
-                    startByte = true;
-                }
+                if (triggerDeltaTime > (HIGH_START_FRAME - DURATION_MARGIN))
+                    &&(triggerDeltaTime < (HIGH_START_FRAME + DURATION_MARGIN))
+                    {
+                        frameCnt = 0;
+                        ESP_LOGI("SWI", "Receiving frame...");
+                        swi_receive_state = IN_FRAME;
+                        swi_state = RECEIVING_DATA;
+                        startByte = true;
+                    }
             }
         }
         else if (swi_receive_state == IN_FRAME)
