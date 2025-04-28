@@ -23,7 +23,7 @@ namespace swi
 
 #define SEND_MSG_OCCURENCE 3
 
-#define MAX_INCOMPATIBLE_DURATION_COUNT 5 // Threshold for reset
+#define MAX_ERROR_COUNT 5 // Threshold for reset
     /**
      *  Enums
      */
@@ -80,6 +80,7 @@ namespace swi
     void swi_setup(void);
     void swi_loop(void);
     void clear_reception_flags(void);
+    void waitForDuration(uint32_t duration_us)
     void sendHigh(uint16_t ms);
     void sendLow(uint16_t ms);
     void sendBinary0(void);
