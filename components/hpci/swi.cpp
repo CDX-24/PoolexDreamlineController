@@ -324,13 +324,13 @@ namespace swi
         switch (swi_receive_state)
         {
         case START_FRAME:
-            if (triggered && lastTriggerStatus == LOW)
+            if (triggered && lastTriggerStatus == HIGH)
             {
                 triggered = false;
                 if (startFrame())
                 { // Si on reçoit un signal de démarrage de trame
                     frameCnt = 0;
-                    ESP_LOGI("SWI", "Receeiving frame...");
+                    ESP_LOGI("SWI", "Receiving frame...");
                     swi_receive_state = IN_FRAME;
                     swi_state = RECEIVING_DATA;
                     startByte = true;
@@ -343,7 +343,7 @@ namespace swi
             { // détection de la fin d'une trame par l'arrivé d'un silence
                 swi_receive_state = END_FRAME;
             }
-            else if (triggered && lastTriggerStatus == LOW)
+            else if (triggered && lastTriggerStatus == HIGH)
             {
                 triggered = false;
                 if (startByte)
