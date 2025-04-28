@@ -28,7 +28,6 @@ namespace swi
      */
     enum wireDirection
     {
-        UNDEFINED,
         SENDING,
         RECEIVING
     };

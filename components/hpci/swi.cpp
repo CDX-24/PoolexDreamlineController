@@ -12,7 +12,7 @@ namespace swi
 
     volatile boolean triggered = false;
 
-    volatile wireDirection currentDirection = UNDEFINED;
+    volatile wireDirection currentDirection = RECEIVING;
 
     volatile boolean frame_available = false;
 
@@ -22,6 +22,39 @@ namespace swi
     volatile communicationState swi_state = IDLE;
     receiveState swi_receive_state = START_FRAME;
     static uint8_t error_count = 0;
+
+
+    IRAM_ATTR void isrCallback(void)
+    {
+        lastTriggerTime = triggerTime;
+        triggerTime = micros();
+        triggerDeltaTime = delaisWithoutRollover(lastTriggerTime, triggerTime);
+        lastTriggerStatus = triggerStatus;
+        triggerStatus = digitalRead(PIN);
+        triggered = true;
+    }
+
+    void setWireDirection(wireDirection direction)
+    {
+        if (direction == RECEIVING)
+        {
+            ESP_LOGI("SWI", "Setting wire direction to RECEIVING");
+            pinMode(PIN, INPUT_PULLUP);
+            attachInterrupt(digitalPinToInterrupt(PIN), isrCallback, CHANGE);
+            currentDirection = RECEIVING;
+        }
+        else if (direction == SENDING)
+        {
+            ESP_LOGI("SWI", "Setting wire direction to SENDING");
+            detachInterrupt(digitalPinToInterrupt(PIN));
+            pinMode(PIN, OUTPUT);
+            currentDirection = SENDING;
+        }
+        else
+        {
+            ESP_LOGE("SWI", "Invalid wire direction specified.");
+        }
+    }
 
     void swi_setup()
     {
@@ -51,7 +84,7 @@ namespace swi
         unsigned long currentTime = millis();
 
         // Log every second
-        if (currentTime - lastLogTime >= 1000)
+        if (currentTime - lastLogTime >= 3000)
         {
             ESP_LOGI("SWI", "SWI loop running... (state is %d, last trigger time: %llu)", swi_state, lastTriggerTime);
             lastLogTime = currentTime;
@@ -115,45 +148,6 @@ namespace swi
         return x;
     }
 
-    /**
-     * @brief
-     *
-     */
-    IRAM_ATTR void isrCallback(void)
-    {
-        lastTriggerTime = triggerTime;
-        triggerTime = micros();
-        triggerDeltaTime = delaisWithoutRollover(lastTriggerTime, triggerTime);
-        lastTriggerStatus = triggerStatus;
-        triggerStatus = digitalRead(PIN);
-        triggered = true;
-    }
-    /**
-     * @brief Set the Wire Direction object
-     *
-     * @param direction
-     */
-    void setWireDirection(wireDirection direction)
-    {
-        if (direction == RECEIVING)
-        {
-            ESP_LOGI("SWI", "Setting wire direction to RECEIVING");
-            pinMode(PIN, INPUT_PULLUP);
-            attachInterrupt(digitalPinToInterrupt(PIN), isrCallback, CHANGE);
-            currentDirection = RECEIVING;
-        }
-        else if (direction == SENDING)
-        {
-            detachInterrupt(digitalPinToInterrupt(PIN));
-            pinMode(PIN, INPUT_PULLUP);
-            attachInterrupt(digitalPinToInterrupt(PIN), isrCallback, CHANGE);
-            currentDirection = SENDING;
-        }
-        else
-        {
-            ESP_LOGE("SWI", "Invalid wire direction specified.");
-        }
-    }
 
     /**
      * @brief
