@@ -35,7 +35,6 @@ namespace esphome
                 settings::HEAT_ONLY, // modeEnum opMode;
             };
             this->hpSettings = defaultSettings;
-            this->sendControl(this->hpSettings);
             swi::swi_setup();
             ESP_LOGD("HPCI", "Successful setup!");
         }

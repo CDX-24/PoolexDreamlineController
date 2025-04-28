@@ -58,6 +58,10 @@ namespace swi
         }
         if (swi_state == IDLE || swi_state == RECEIVING_DATA)
         {
+            if(currentDirection != RECEIVING)
+            {
+                setWireDirection(RECEIVING);
+            }
             readFrame();
         }
         else if (swi_state == TRANSMITTING_DATA)
@@ -120,12 +124,16 @@ namespace swi
             attachInterrupt(digitalPinToInterrupt(PIN), isrCallback, CHANGE);
             currentDirection = RECEIVING;
         }
-        else
+        else if (direction == SENDING)
         {
             detachInterrupt(digitalPinToInterrupt(PIN));
-            pinMode(PIN, OUTPUT);
-            clear_reception_flags();
+            pinMode(PIN, INPUT_PULLUP);
+            attachInterrupt(digitalPinToInterrupt(PIN), isrCallback, CHANGE);
             currentDirection = SENDING;
+        }
+        else
+        {
+            ESP_LOGE("SWI", "Invalid wire direction specified.");
         }
     }
 
