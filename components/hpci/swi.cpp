@@ -102,7 +102,6 @@ namespace swi
      */
     IRAM_ATTR void isrCallback(void)
     {
-        ESP_LOGI("SWI", "ISR Callback triggered");
         lastTriggerTime = triggerTime;
         triggerTime = micros();
         triggerDeltaTime = delaisWithoutRollover(lastTriggerTime, triggerTime);
