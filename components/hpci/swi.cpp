@@ -291,20 +291,21 @@ namespace swi
         static uint8_t cptByte = 0;
         // Log every second
         static unsigned long lastLogTime = 0;
+        static unisnged long previousTime = millis();
+        unsigned long timeDiff = millis() - previousTime;
         unsigned long currentTime = millis();
-        if (currentTime - lastLogTime >= 3000)
-        {
-            ESP_LOGI("SWI", "SWI read frame running... (state is %d)", swi_receive_state);
-            ESP_LOGI("SWI", "Trigger status: %d", triggerStatus);
-            ESP_LOGI("SWI", "Last Trigger status: %d", lastTriggerStatus);
-            lastLogTime = currentTime;
-        }
 
         if (swi_receive_state == START_FRAME)
         {
             if (triggered && lastTriggerStatus == HIGH)
             {
-                triggered = false;
+                if (currentTime - lastLogTime >= 3000)
+                {
+                    ESP_LOGI("SWI", "SWI read frame running... (state is %d)", swi_receive_state);
+                    ESP_LOGI("SWI", "Trigger status: %d", triggerStatus);
+                    ESP_LOGI("SWI", "Last Trigger delta time: %lu", triggerDeltaTime);
+                    lastLogTime = currentTime;
+                }
                 if (startFrame())
                 {
                     frameCnt = 0;
@@ -352,12 +353,14 @@ namespace swi
             ESP_LOGI("SWI", "Frame received!");
             swi_state = IDLE;
             clear_reception_flags();
-        }else{
+        }
+        else
+        {
             ESP_LOGE("SWI", "Unknown state: %d", swi_receive_state);
             error_count++;
             clear_reception_flags();
         }
         triggered = false;
     }
-    
+
 }
