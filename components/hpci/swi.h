@@ -77,7 +77,9 @@ namespace swi
     void setWireDirection(wireDirection direction);
 
     /* ================================================== */
-
+    void swi_setup(void);
+    void swi_loop(void);
+    void clear_reception_flags(void);
     void sendHigh(uint16_t ms);
     void sendLow(uint16_t ms);
     void sendBinary0(void);

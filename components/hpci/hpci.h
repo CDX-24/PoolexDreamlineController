@@ -14,13 +14,13 @@ namespace esphome
     {
     public:
       void setup() override;
-      extern volatile bool data_to_send;
+      volatile bool data_to_send;
       float get_setup_priority() const override { return setup_priority::BUS; }
 
       void loop() override;
       void setTargetTemp(uint16_t value);
       void setOn(bool value);
-      void sendControl(settings::ctrlSettings settings);
+      bool sendControl(settings::ctrlSettings settings);
       float getTargetTemp();
       float getWaterInTemp();
       float getWaterOutTemp();
