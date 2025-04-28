@@ -31,6 +31,7 @@ namespace swi
         swi_state = IDLE;
         frame_available = false;
         setWireDirection(RECEIVING);
+        ESP_LOGI("SWI", "SWI setup complete.");
     }
 
     void clear_reception_flags()
@@ -120,6 +121,7 @@ namespace swi
     {
         if (direction == RECEIVING)
         {
+            ESP_LOGI("SWI", "Setting wire direction to RECEIVING");
             pinMode(PIN, INPUT_PULLUP);
             attachInterrupt(digitalPinToInterrupt(PIN), isrCallback, CHANGE);
             currentDirection = RECEIVING;
