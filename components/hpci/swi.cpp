@@ -1,5 +1,7 @@
 #include "swi.h"
 
+#define DEBOUNCE_THRESHOLD 200 // Debounce threshold in microseconds
+
 namespace swi
 {
     volatile unsigned long triggerTime = 0;
@@ -26,12 +28,16 @@ namespace swi
 
     IRAM_ATTR void isrCallback(void)
     {
-        lastTriggerTime = triggerTime;
-        triggerTime = micros();
-        triggerDeltaTime = delaisWithoutRollover(lastTriggerTime, triggerTime);
-        lastTriggerStatus = triggerStatus;
-        triggerStatus = digitalRead(PIN);
-        triggered = true;
+        unsigned long currentMicros = micros();
+        if (delaisWithoutRollover(triggerTime, currentMicros) > DEBOUNCE_THRESHOLD)
+        {
+            lastTriggerTime = triggerTime;
+            triggerTime = currentMicros;
+            triggerDeltaTime = delaisWithoutRollover(lastTriggerTime, triggerTime);
+            lastTriggerStatus = triggerStatus;
+            triggerStatus = digitalRead(PIN);
+            triggered = true;
+        }
     }
 
     void setWireDirection(wireDirection direction)
