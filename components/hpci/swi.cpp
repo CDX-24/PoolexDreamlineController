@@ -23,7 +23,6 @@ namespace swi
     receiveState swi_receive_state = START_FRAME;
     static uint8_t error_count = 0;
 
-
     IRAM_ATTR void isrCallback(void)
     {
         lastTriggerTime = triggerTime;
@@ -84,6 +83,7 @@ namespace swi
         static unsigned long lastLogTime = 0;
         unsigned long currentTime = millis();
 
+        readFrame();
         // Log every second
         if (currentTime - lastLogTime >= 3000)
         {
@@ -99,27 +99,6 @@ namespace swi
             ESP_LOGW("SWI", "Error count exceeded! Resetting connection.");
             swi_setup();
             return;
-        }
-
-        switch (swi_state)
-        {
-        case IDLE:
-        case RECEIVING_DATA:
-            if (currentDirection != RECEIVING)
-            {
-                setWireDirection(RECEIVING);
-            }
-            readFrame();
-            break;
-
-        case TRANSMITTING_DATA:
-            // Handle transmission state
-            break;
-
-        default:
-            ESP_LOGE("SWI", "Unknown state encountered!");
-            swi_setup();
-            break;
         }
     }
 
@@ -150,7 +129,6 @@ namespace swi
         x = ((x >> 4) & 0x0f) | ((x << 4) & 0xf0);
         return x;
     }
-
 
     /**
      * @brief
@@ -354,11 +332,6 @@ namespace swi
                 }
 
                 uint8_t bit = readBit();
-                if (bit == 0xff) // Invalid bit
-                {
-                    return;
-                }
-
                 newByte |= bit << cptByte++;
                 if (cptByte == 8)
                 {
@@ -370,7 +343,6 @@ namespace swi
                         ESP_LOGE("SWI", "Frame overflow detected. Resetting frame counter.");
                         error_count++;
                         clear_reception_flags();
-                        return;
                     }
                 }
             }
@@ -381,6 +353,11 @@ namespace swi
             ESP_LOGI("SWI", "Frame received!");
             swi_state = IDLE;
             clear_reception_flags();
+        }else{
+            ESP_LOGE("SWI", "Unknown state: %d", swi_receive_state);
+            error_count++;
+            clear_reception_flags();
         }
     }
+    triggered = false;
 }
