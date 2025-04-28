@@ -11,17 +11,16 @@ namespace swi
     volatile byte lastTriggerStatus;
 
     volatile boolean triggered = false;
+
     volatile wireDirection currentDirection = UNDEFINED;
 
     volatile boolean frame_available = false;
 
     uint8_t read_frame[MAX_FRAME_SIZE];
     uint8_t frameCnt;
+    
     volatile communicationState swi_state = IDLE;
     receiveState swi_receive_state = START_FRAME;
-    uint8_t current_frame[16];
-    uint8_t frame_index = 0;
-    uint8_t bit_index = 0;
     static uint8_t error_count = 0;
 
     void swi_setup()
@@ -43,8 +42,6 @@ namespace swi
         lastTriggerStatus = LOW;
         triggered = false;
         frameCnt = 0;
-        frame_index = 0;
-        bit_index = 0;
         swi_receive_state = START_FRAME;
     }
 

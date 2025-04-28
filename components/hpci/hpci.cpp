@@ -4,16 +4,11 @@ namespace esphome
 {
     namespace hpci
     {
-        HeatPumpController *heat_pump_controller = nullptr;
-
-        // uint8_t HeatPumpController::frame[HP_FRAME_LEN];
-        // hpInfo HeatPumpController::hpData;
         uint8_t lastDataType;
         volatile bool data_to_send = false;
 
         void HeatPumpController::setup()
         {
-
             lastDataType = 0;
             this->high_freq_.start();
 
@@ -36,7 +31,7 @@ namespace esphome
             };
             this->hpSettings = defaultSettings;
             swi::swi_setup();
-            ESP_LOGD("HPCI", "Successful setup!");
+            ESP_LOGI("HPCI", "Successful setup!");
         }
 
         bool HeatPumpController::sendControl(settings::ctrlSettings settings)
@@ -116,6 +111,7 @@ namespace esphome
             if (swi::frame_available)
             {
                 swi::frame_available = false;
+                ESP_LOGI("HPCI", "Frame received!");
                 if (this->frameIsValid(swi::read_frame, swi::frameCnt))
                 {
                     ESP_LOGI("HPCI", "Frame Data (%s):", lastDataType == 0xD2 ? "Control" : "Status");
@@ -141,7 +137,8 @@ namespace esphome
             }
             if (this->data_to_send)
             {
-                if(this->sendControl(this->hpSettings)){
+                if (this->sendControl(this->hpSettings))
+                {
                     this->data_to_send = false;
                 }
                 // Wait for the data to be sent. Data will be sent when transmission is available.
@@ -197,20 +194,15 @@ namespace esphome
         {
             if (size == HP_FRAME_LEN)
             {
-                return this->checksumIsValid(frame, size);
+                unsigned char computed_checksum = this->computeChecksum(frame, size);
+                unsigned char checksum = frame[size - 1];
+                return computed_checksum == checksum;
             }
             else
             {
                 return false;
             }
             return false;
-        }
-
-        bool HeatPumpController::checksumIsValid(uint8_t frame[], uint8_t size)
-        {
-            unsigned char computed_checksum = this->computeChecksum(frame, size);
-            unsigned char checksum = frame[size - 1];
-            return computed_checksum == checksum;
         }
 
         uint8_t HeatPumpController::computeChecksum(uint8_t frame[], uint8_t size)

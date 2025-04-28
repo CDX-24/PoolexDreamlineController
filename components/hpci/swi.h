@@ -13,7 +13,6 @@ namespace swi
 #define HIGH_1_TIME 1000
 #define HIGH_0_TIME 3000
 
-#define LOW_START_FRAME 9000 // Inutilisé pour l'instant On n'utilise que les états "hauts".
 #define HIGH_START_FRAME 5000
 
 #define DURATION_MARGIN 500 // Marge d'erreur pour les durées.
