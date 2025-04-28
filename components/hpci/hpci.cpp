@@ -45,7 +45,8 @@ namespace esphome
 
         void HeatPumpController::handleReset()
         {
-            ESP_LOGI("HPCI", "Reset triggered by SWI. Resending settings...");
+            ESP_LOGE("HPCI", "Reset triggered by SWI. Resending settings...");
+            swi::setWireDirection(swi::RECEIVING);
             this->sendControl(this->hpSettings);
         }
 

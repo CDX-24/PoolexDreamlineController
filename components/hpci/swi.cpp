@@ -65,7 +65,6 @@ namespace swi
         triggerDeltaTime = delaisWithoutRollover(lastTriggerTime, triggerTime);
         lastTriggerStatus = triggerStatus;
         triggerStatus = digitalRead(PIN);
-        ESP_LOGD("SWI", "Trigger Delta Time: %lu, Status: %d", triggerDeltaTime, triggerStatus);
         triggered = true;
     }
     /**
@@ -170,7 +169,7 @@ namespace swi
         for (uint8_t i = 0; i < 4; i++)
         {
             esphome::App.feed_wdt(); // Feed the watchdog
-            sendHigh(250);
+            sendHigh(500);
         }
     }
 
@@ -211,7 +210,7 @@ namespace swi
 
             sendSpaceCmdFramesGroup();
         }
-        ESP_LOGI("swi", "Successfully sent frame !");
+        ESP_LOGI("SWI", "Successfully sent frame !");
         setWireDirection(RECEIVING);
     }
 
