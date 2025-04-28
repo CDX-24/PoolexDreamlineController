@@ -36,7 +36,7 @@ namespace esphome
             };
             this->hpSettings = defaultSettings;
             this->sendControl(this->hpSettings);
-            swi::setWireDirection(swi::RECEIVING);
+            swi::swi_setup();
             ESP_LOGD("HPCI", "Successful setup!");
         }
 
