@@ -41,7 +41,6 @@ namespace esphome
             if (swi::frame_available)
             {
                 swi::frame_available = false;
-                ESP_LOGI("HPCI", "Frame received!");
                 if (this->frameIsValid(swi::read_frame, swi::frameCnt))
                 {
                     ESP_LOGI("HPCI", "Frame Data (%s):", lastDataType == 0xD2 ? "Control" : "Status");
@@ -196,10 +195,12 @@ namespace esphome
             {
                 unsigned char computed_checksum = this->computeChecksum(frame, size);
                 unsigned char checksum = frame[size - 1];
+                ESP_LOGD("HPCI", "Checksum: %d, Computed: %d", checksum, computed_checksum);
                 return computed_checksum == checksum;
             }
             else
             {
+                ESP_LOGW("HPCI", "Frame size is not valid (%d)", size);
                 return false;
             }
             return false;
