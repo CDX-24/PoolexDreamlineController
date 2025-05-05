@@ -1,6 +1,6 @@
 #include "swi.h"
 
-#define DEBOUNCE_THRESHOLD 200 // Debounce threshold in microseconds
+
 
 namespace swi
 {
@@ -74,7 +74,7 @@ namespace swi
 
     void clear_reception_flags()
     {
-        ESP_LOGI("SWI", "Clearing reception flags...");
+        //ESP_LOGI("SWI", "Clearing reception flags...");
         triggerTime = 0;
         lastTriggerTime = 0;
         triggerDeltaTime = 0;
@@ -302,14 +302,13 @@ namespace swi
         {
             if (triggered && lastTriggerStatus == HIGH)
             {
-                if (currentTime - lastLogTime >= 3000)
-                {
-                    ESP_LOGI("SWI", "SWI read frame running... (state is %d)", swi_receive_state);
-                    ESP_LOGI("SWI", "Trigger status: %d", triggerStatus);
-                    ESP_LOGI("SWI", "Last Trigger delta time: %lu", triggerDeltaTime);
-                    ESP_LOGI("SWI", "Time since last loop: %lu", timeLoopdiff);
-                    lastLogTime = currentTime;
-                }
+                // if (currentTime - lastLogTime >= 3000)
+                // {
+                //     ESP_LOGI("SWI", "SWI read frame running... (state is %d)", swi_receive_state);
+                //     ESP_LOGI("SWI", "Last Trigger delta time: %lu", triggerDeltaTime);
+                //     ESP_LOGI("SWI", "Time since last loop: %lu", timeLoopdiff);
+                //     lastLogTime = currentTime;
+                // }
                 if ((triggerDeltaTime > (HIGH_START_FRAME - DURATION_MARGIN)) && (triggerDeltaTime < (HIGH_START_FRAME + DURATION_MARGIN)))
                 {
                     frameCnt = 0;

@@ -15,7 +15,7 @@ namespace swi
 
 #define HIGH_START_FRAME 5000
 
-#define DURATION_MARGIN 500 // Marge d'erreur pour les durées.
+#define DURATION_MARGIN 300 // Marge d'erreur pour les durées.
 
 #define MAX_TIME 12000
 #define MAX_FRAME_SIZE 20
@@ -23,6 +23,8 @@ namespace swi
 #define SEND_MSG_OCCURENCE 3
 
 #define MAX_ERROR_COUNT 5 // Threshold for reset
+
+#define DEBOUNCE_THRESHOLD 400 // Debounce threshold in microseconds
     /**
      *  Enums
      */
