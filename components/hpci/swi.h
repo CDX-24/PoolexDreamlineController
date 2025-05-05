@@ -7,7 +7,7 @@ namespace swi
 /**
  *  Defines
  */
-#define PIN 12
+#define PIN 13
 #define LOW_TIME 1000
 #define HIGH_1_TIME 1000
 #define HIGH_0_TIME 3000
