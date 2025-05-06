@@ -29,15 +29,12 @@ namespace swi
     IRAM_ATTR void isrCallback(void)
     {
         unsigned long currentMicros = micros();
-        if (delaisWithoutRollover(triggerTime, currentMicros) > DEBOUNCE_THRESHOLD)
-        {
-            lastTriggerTime = triggerTime;
-            triggerTime = currentMicros;
-            triggerDeltaTime = delaisWithoutRollover(lastTriggerTime, triggerTime);
-            lastTriggerStatus = triggerStatus;
-            triggerStatus = digitalRead(PIN);
-            triggered = true;
-        }
+        lastTriggerTime = triggerTime;
+        triggerTime = currentMicros;
+        triggerDeltaTime = delaisWithoutRollover(lastTriggerTime, triggerTime);
+        lastTriggerStatus = triggerStatus;
+        triggerStatus = digitalRead(PIN);
+        triggered = true;
     }
 
     void setWireDirection(wireDirection direction)
