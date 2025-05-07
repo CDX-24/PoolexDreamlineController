@@ -3,6 +3,7 @@ import esphome.config_validation as cv
 from esphome.components import sensor
 from esphome.const import (
     CONF_ID,
+    CONF_PIN,
 )
 
 MULTI_CONF = False
@@ -49,6 +50,7 @@ CONFIG_SCHEMA = cv.All(
     cv.Schema(
         {
             cv.GenerateID(): cv.declare_id(HeatPumpControlInterface),
+            cv.Required(CONF_PIN): cv.positive_int,  # Add this line for the GPIO pin
             cv.Optional(CONF_DEFROST_AUTO_ENABLE_TIME, default=40): cv.int_range(
                 min=30, max=90
             ),
@@ -87,4 +89,5 @@ CONFIG_SCHEMA = cv.All(
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
+    cg.add(var.set_pin(config[CONF_PIN]))  # Pass the pin to the C++ code
 

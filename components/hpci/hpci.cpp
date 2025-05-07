@@ -61,6 +61,12 @@ namespace esphome
             swi::sendFrame(frame, HP_FRAME_LEN);
         }
 
+        void HeatPumpController::set_pin(uint8_t pin)
+        {
+            this->pin_ = pin;
+            swi::setWireDirection(swi::RECEIVING); // Example usage
+        }
+
         bool HeatPumpController::decode(uint8_t frame[])
         {
             if (frame[0] == 0xD2)

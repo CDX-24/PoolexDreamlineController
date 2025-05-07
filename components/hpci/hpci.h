@@ -27,7 +27,10 @@ namespace esphome
       bool getRunning();
       uint16_t getErrorCode();
 
+      void set_pin(uint8_t pin);
+
     protected:
+      uint8_t pin_;
       settings::hpInfo hpData;
       settings::ctrlSettings hpSettings;
       HighFrequencyLoopRequester high_freq_;

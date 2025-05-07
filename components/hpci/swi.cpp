@@ -2,7 +2,8 @@
 
 namespace swi
 {
-    volatile unsigned long triggerTime = 0;
+    constexpr uint8_t BIT_MASK = 0x80;
+
     volatile unsigned long lastTriggerTime = 0;
 
     volatile unsigned long triggerDeltaTime;
@@ -14,6 +15,26 @@ namespace swi
 
     uint8_t read_frame[MAX_FRAME_SIZE];
     uint8_t frameCnt;
+
+    void setup(uint8_t pin)
+    {
+        PIN = pin;
+        frameCnt = 0;
+        triggered = false;
+        triggerStatus = HIGH;
+        lastTriggerStatus = HIGH;
+        triggerDeltaTime = 0;
+        lastTriggerTime = 0;
+
+        setWireDirection(RECEIVING);
+    }
+    {
+        // Initialisation de la pin
+        pinMode(PIN, INPUT_PULLUP);
+        // Initialisation de l'interruption
+        attachInterrupt(digitalPinToInterrupt(PIN), isrCallback, CHANGE);
+        ESP_LOGD("SWI", "Succesful setup !");
+    }
 
     /**
      * @brief
@@ -30,7 +51,7 @@ namespace swi
     }
 
     /**
-     * @brief
+o     * @brief
      *
      * @param x
      * @return uint8_t
@@ -49,9 +70,9 @@ namespace swi
      */
     IRAM_ATTR void isrCallback(void)
     {
-        lastTriggerTime = triggerTime;
-        triggerTime = micros();
-        triggerDeltaTime = delaisWithoutRollover(lastTriggerTime, triggerTime);
+        unsigned long currentTime = micros();
+        triggerDeltaTime = delaisWithoutRollover(lastTriggerTime, currentTime);
+        lastTriggerTime = currentTime;
         lastTriggerStatus = triggerStatus;
         triggerStatus = digitalRead(PIN);
         triggered = true;
@@ -175,7 +196,7 @@ namespace swi
                 uint8_t value = frame_send[frameIndex];
                 for (uint8_t bitIndex = 0; bitIndex < 8; bitIndex++)
                 {
-                    uint8_t bit = (value << bitIndex) & B10000000;
+                    uint8_t bit = (value << bitIndex) & BIT_MASK;
                     if (bit)
                     {
                         sendBinary1();
@@ -218,17 +239,9 @@ namespace swi
     {
         // Il faut bloquer les interruptions car le calcul ci-dessous peut être modifié par une interruption
         cli(); // stop interrupts
-        unsigned long delta = delaisWithoutRollover(triggerTime, micros());
+        unsigned long delta = delaisWithoutRollover(lastTriggerTime, micros());
         sei(); // restart Interrupt
         return (delta > MAX_TIME);
-    }
-
-    // essaye de détecter le silence de 1s. A vérifier.
-    boolean longSilence()
-    {
-        if (frameCnt < 9)
-            return false;
-        return read_frame[0] == 0xd1 && read_frame[1] == 0xb1;
     }
 
     // fonction principale. Lit une trame.

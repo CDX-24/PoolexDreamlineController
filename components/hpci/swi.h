@@ -7,19 +7,13 @@ namespace swi
 /**
  *  Defines
  */
-#define PIN 12
 #define LOW_TIME 1000
 #define HIGH_1_TIME 1000
 #define HIGH_0_TIME 3000
 
-#define LOW_START_FRAME 9000 // Inutilisé pour l'instant On n'utilise que les états "hauts".
 #define HIGH_START_FRAME 5000
 
 #define DURATION_MARGIN 500 // Marge d'erreur pour les durées.
-
-#define START_FRAME 1 // Indicateur d'état de la lecture d'une trame
-#define IN_FRAME 2
-#define END_FRAME 3
 
 #define MAX_TIME 12000
 #define MAX_FRAME_SIZE 20
@@ -34,10 +28,16 @@ namespace swi
         RECEIVING
     };
 
+    enum readingPhase
+    {
+        START_FRAME,
+        IN_FRAME,
+        END_FRAME
+    };
+
     /**
      *  Variables
      */
-    extern volatile unsigned long triggerTime;
     extern volatile unsigned long lastTriggerTime;
 
     extern volatile unsigned long triggerDeltaTime;
@@ -49,6 +49,7 @@ namespace swi
 
     extern uint8_t read_frame[MAX_FRAME_SIZE];
     extern uint8_t frameCnt;
+    extern uint8_t PIN;
 
     /**
      *  Functions
@@ -60,7 +61,7 @@ namespace swi
     void setWireDirection(wireDirection direction);
 
     /* ================================================== */
-
+    void setup(uint8_t pin);
     void sendHigh(uint16_t ms);
     void sendLow(uint16_t ms);
     void sendBinary0(void);
