@@ -205,7 +205,7 @@ namespace swi
             return 1;
         if ((triggerDeltaTime > (HIGH_0_TIME - DURATION_MARGIN)) && (triggerDeltaTime < (HIGH_0_TIME + DURATION_MARGIN)))
             return 0;
-        ESP_LOGW("SWI", "Incompatible duration !");
+        ESP_LOGW("SWI", "Incompatible duration (%d)!", triggerDeltaTime);
         return 0xff;
     }
 
