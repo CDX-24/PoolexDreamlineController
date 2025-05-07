@@ -71,7 +71,7 @@ namespace swi
         else
         {
             detachInterrupt(digitalPinToInterrupt(PIN));
-            //pinMode(PIN, OUTPUT);
+            pinMode(PIN, OUTPUT);
         }
     }
 
