@@ -1,7 +1,5 @@
 #include "swi.h"
 
-
-
 namespace swi
 {
     volatile unsigned long triggerTime = 0;
@@ -71,7 +69,7 @@ namespace swi
 
     void clear_reception_flags()
     {
-        //ESP_LOGI("SWI", "Clearing reception flags...");
+        // ESP_LOGI("SWI", "Clearing reception flags...");
         triggerTime = 0;
         lastTriggerTime = 0;
         triggerDeltaTime = 0;
@@ -294,18 +292,18 @@ namespace swi
         unsigned long currentMicros = micros();
         unsigned long timeLoopdiff = currentMicros - lastLoopTime;
         lastLoopTime = currentMicros;
-
+        if (currentTime - lastLogTime >= 3000)
+        {
+            //ESP_LOGI("SWI", "SWI read frame running... (state is %d)", swi_receive_state);
+            ESP_LOGI("SWI", "Last Trigger delta time: %lu", triggerDeltaTime);
+            //ESP_LOGI("SWI", "Time since last loop: %lu", timeLoopdiff);
+            lastLogTime = currentTime;
+        }
         if (swi_receive_state == START_FRAME)
         {
             if (triggered && lastTriggerStatus == HIGH)
             {
-                // if (currentTime - lastLogTime >= 3000)
-                // {
-                //     ESP_LOGI("SWI", "SWI read frame running... (state is %d)", swi_receive_state);
-                //     ESP_LOGI("SWI", "Last Trigger delta time: %lu", triggerDeltaTime);
-                //     ESP_LOGI("SWI", "Time since last loop: %lu", timeLoopdiff);
-                //     lastLogTime = currentTime;
-                // }
+
                 if ((triggerDeltaTime > (HIGH_START_FRAME - DURATION_MARGIN)) && (triggerDeltaTime < (HIGH_START_FRAME + DURATION_MARGIN)))
                 {
                     frameCnt = 0;
