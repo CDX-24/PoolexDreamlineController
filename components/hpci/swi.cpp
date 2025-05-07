@@ -2,6 +2,7 @@
 
 namespace swi
 {
+    uint8_t PIN; // Define the PIN variable
     constexpr uint8_t BIT_MASK = 0x80;
 
     volatile unsigned long lastTriggerTime = 0;
