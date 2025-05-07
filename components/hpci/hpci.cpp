@@ -4,8 +4,6 @@ namespace esphome
 {
     namespace hpci
     {
-        // uint8_t HeatPumpController::frame[HP_FRAME_LEN];
-        // hpInfo HeatPumpController::hpData;
 
         void HeatPumpController::setup()
         {
@@ -28,8 +26,6 @@ namespace esphome
                 settings::HEAT_ONLY, // modeEnum opMode;
             };
             this->hpSettings = defaultSettings;
-            this->sendControl(this->hpSettings);
-            swi::setWireDirection(swi::RECEIVING);
             ESP_LOGD("HPCI", "Succesful setup !");
         }
 
@@ -64,7 +60,7 @@ namespace esphome
         void HeatPumpController::set_pin(uint8_t pin)
         {
             this->pin_ = pin;
-            swi::setWireDirection(swi::RECEIVING); // Example usage
+            swi::setup(pin);
         }
 
         bool HeatPumpController::decode(uint8_t frame[])
