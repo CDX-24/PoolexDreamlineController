@@ -28,13 +28,6 @@ namespace swi
 
         setWireDirection(RECEIVING);
     }
-    {
-        // Initialisation de la pin
-        pinMode(PIN, INPUT_PULLUP);
-        // Initialisation de l'interruption
-        attachInterrupt(digitalPinToInterrupt(PIN), isrCallback, CHANGE);
-        ESP_LOGD("SWI", "Succesful setup !");
-    }
 
     /**
      * @brief
