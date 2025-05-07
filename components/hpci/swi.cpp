@@ -65,7 +65,7 @@ namespace swi
     {
         if (direction == RECEIVING)
         {
-            pinMode(PIN, INPUT_PULLUP);
+            pinMode(PIN, INPUT);
             attachInterrupt(digitalPinToInterrupt(PIN), isrCallback, CHANGE);
         }
         else
