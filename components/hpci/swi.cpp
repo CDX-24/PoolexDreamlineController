@@ -65,13 +65,13 @@ namespace swi
     {
         if (direction == RECEIVING)
         {
-            pinMode(PIN, INPUT);
+            pinMode(PIN, INPUT_PULLUP);
             attachInterrupt(digitalPinToInterrupt(PIN), isrCallback, CHANGE);
         }
         else
         {
             detachInterrupt(digitalPinToInterrupt(PIN));
-            pinMode(PIN, OUTPUT);
+            //pinMode(PIN, OUTPUT);
         }
     }
 
