@@ -292,7 +292,7 @@ namespace swi
         unsigned long currentMicros = micros();
         unsigned long timeLoopdiff = currentMicros - lastLoopTime;
         lastLoopTime = currentMicros;
-        if (currentTime - lastLogTime >= 3000)
+        if ((currentTime - lastLogTime >= 1000) && triggered)
         {
             //ESP_LOGI("SWI", "SWI read frame running... (state is %d)", swi_receive_state);
             ESP_LOGI("SWI", "Last Trigger delta time: %lu", triggerDeltaTime);
